@@ -44,44 +44,6 @@
       transform: translateY(-8px) scale(1.03);
       box-shadow: 0 0 25px rgba(74,222,128,0.5);
     }
-
-    /* Language modal */
-    .modal {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(5px);
-      z-index: 100;
-      justify-content: center; align-items: center;
-    }
-    .modal-content {
-      background: #1e293b;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      width: 90%; max-width: 400px;
-      text-align: center;
-    }
-    .modal-content h3 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      color: #4ade80;
-    }
-    .modal-content button {
-      display: block;
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      background: #374151;
-      color: white;
-      transition: 0.3s;
-      font-weight: 600;
-    }
-    .modal-content button:hover {
-      background: #4ade80;
-      color: black;
-    }
   </style>
 </head>
 <body class="relative bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white font-sans overflow-x-hidden">
@@ -94,11 +56,9 @@
   <nav class="flex justify-between items-center px-6 py-4 bg-white/10 backdrop-blur-md shadow-lg sticky top-0 z-40">
     <div class="flex items-center gap-4">
       <button id="menu-btn" class="text-2xl">&#9776;</button>
-      <!-- dashboard title (translatable) -->
-      <h1 class="text-2xl font-bold text-indigo-300" data-translate="dashboard_title">PaisaBuddy Dashboard</h1>
+      <h1 class="text-2xl font-bold text-indigo-300">PaisaBuddy Dashboard</h1>
     </div>
-    <!-- navbar logout button (translatable) -->
-    <button onclick="logout()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-red-400 to-red-600 hover:scale-105 transition shadow-md" data-translate="btn_logout">
+    <button onclick="logout()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-red-400 to-red-600 hover:scale-105 transition shadow-md">
       Logout
     </button>
   </nav>
@@ -106,99 +66,41 @@
   <!-- Sidebar -->
   <aside id="sidebar" class="sidebar">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold text-green-400" data-translate="menu_heading">Menu</h2>
+      <h2 class="text-xl font-bold text-green-400">Menu</h2>
       <button id="close-btn" class="text-gray-400 text-2xl hover:text-red-400">&times;</button>
     </div>
-    <a href="#" data-translate="menu_profile">👤 Profile & Settings</a>
-    <a href="#" id="language-btn" data-translate="menu_language">🌐 Language Selector</a>
-    <a href="#" data-translate="menu_download">⬇️ Download Lessons</a>
-    <a href="#" data-translate="menu_voice">🎧 Voice Learning Mode</a>
-    <a href="#" data-translate="menu_history">📜 Transaction History</a>
-    <a href="#" data-translate="menu_help">❓ Help & Support</a>
-    <a href="#" data-translate="menu_info">ℹ️ App Info/About</a>
-    <a href="#" onclick="logout()" data-translate="menu_logout">🚪 Logout</a>
+    <a href="#">👤 Profile & Settings</a>
+    <a href="#">🌐 Language Selector</a>
+    <a href="#">⬇️ Download Lessons</a>
+    <a href="#">🎧 Voice Learning Mode</a>
+    <a href="#">📜 Transaction History</a>
+    <a href="#">❓ Help & Support</a>
+    <a href="#">ℹ️ App Info/About</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
   </aside>
-
-  <!-- Language Modal -->
-  <div id="language-modal" class="modal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="langModalTitle">
-      <h3 id="langModalTitle">Select Your Language</h3>
-      <button onclick="setLanguage('en')">English</button>
-      <button onclick="setLanguage('hi')">हिन्दी</button>
-      <button onclick="setLanguage('mr')">मराठी</button>
-      <button onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
 
   <!-- Dashboard Main -->
   <main class="px-6 py-10 md:px-12">
     <!-- Greeting -->
     <div class="text-center mb-12">
-      <h2 class="text-4xl font-bold mb-4" data-translate="welcome">👋 Welcome back, Buggy Bunch!</h2>
-      <p class="text-lg text-indigo-200" data-translate="subtitle">Your personalized money journey starts here 🚀</p>
+      <h2 class="text-4xl font-bold mb-4">👋 Welcome back, Buggy Bunch!</h2>
+      <p class="text-lg text-indigo-200">Your personalized money journey starts here 🚀</p>
     </div>
 
     <!-- Cards -->
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-green-300 mb-2" data-translate="card1_title">📊 Virtual Portfolio</h3>
-        <p data-translate="card1_text">Track and manage your simulated investments.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-yellow-300 mb-2" data-translate="card2_title">🏆 Rewards & Badges</h3>
-        <p data-translate="card2_text">See PaisaCoins, badges, and redeem options.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-purple-300 mb-2" data-translate="card3_title">📈 Leaderboard</h3>
-        <p data-translate="card3_text">Compete with friends & view your rank.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-pink-300 mb-2" data-translate="card4_title">🤖 Buddy Bhalya</h3>
-        <p data-translate="card4_text">AI chatbot for instant financial advice.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-indigo-300 mb-2" data-translate="card5_title">❤️ Financial Health Score</h3>
-        <p data-translate="card5_text">Visual score & tips to improve.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-green-300 mb-2" data-translate="card6_title">📚 Lessons & Quizzes</h3>
-        <p data-translate="card6_text">Continue streaks and quizzes.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-orange-300 mb-2" data-translate="card7_title">💰 Budget Buddy</h3>
-        <p data-translate="card7_text">Daily/weekly budgeting tool.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-teal-300 mb-2" data-translate="card8_title">🎯 Goal Tracker</h3>
-        <p data-translate="card8_text">Set and monitor savings goals.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-red-300 mb-2" data-translate="card9_title">🕵️ Spot the Scam</h3>
-        <p data-translate="card9_text">Play fraud identification mini-games.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-blue-300 mb-2" data-translate="card10_title">📖 Case Study Challenge</h3>
-        <p data-translate="card10_text">Real-life financial decision games.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-lime-300 mb-2" data-translate="card11_title">📰 News Simplifier</h3>
-        <p data-translate="card11_text">Latest finance news in Hinglish.</p>
-      </div>
-
-      <div class="feature-card">
-        <h3 class="text-lg font-semibold text-fuchsia-300 mb-2" data-translate="card12_title">👥 Community Challenges</h3>
-        <p data-translate="card12_text">Join weekly savings/investment challenges.</p>
-      </div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-green-300 mb-2">📊 Virtual Portfolio</h3><p>Track and manage your simulated investments.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-yellow-300 mb-2">🏆 Rewards & Badges</h3><p>See PaisaCoins, badges, and redeem options.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-purple-300 mb-2">📈 Leaderboard</h3><p>Compete with friends & view your rank.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-pink-300 mb-2">🤖 Buddy Bhalya</h3><p>AI chatbot for instant financial advice.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-indigo-300 mb-2">❤️ Financial Health Score</h3><p>Visual score & tips to improve.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-green-300 mb-2">📚 Lessons & Quizzes</h3><p>Continue streaks and quizzes.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-orange-300 mb-2">💰 Budget Buddy</h3><p>Daily/weekly budgeting tool.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-teal-300 mb-2">🎯 Goal Tracker</h3><p>Set and monitor savings goals.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-red-300 mb-2">🕵️ Spot the Scam</h3><p>Play fraud identification mini-games.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-blue-300 mb-2">📖 Case Study Challenge</h3><p>Real-life financial decision games.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-lime-300 mb-2">📰 News Simplifier</h3><p>Latest finance news in Hinglish.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-fuchsia-300 mb-2">👥 Community Challenges</h3><p>Join weekly savings/investment challenges.</p></div>
     </div>
   </main>
 
@@ -206,170 +108,13 @@
     const sidebar = document.getElementById("sidebar");
     const menuBtn = document.getElementById("menu-btn");
     const closeBtn = document.getElementById("close-btn");
-    const languageBtn = document.getElementById("language-btn");
-    const languageModal = document.getElementById("language-modal");
 
-    // Full translations for English, Hindi, Marathi (all visible text keys)
-    const translations = {
-      en: {
-        dashboard_title: "PaisaBuddy Dashboard",
-        btn_logout: "Logout",
-        menu_heading: "Menu",
-        menu_profile: "👤 Profile & Settings",
-        menu_language: "🌐 Language Selector",
-        menu_download: "⬇️ Download Lessons",
-        menu_voice: "🎧 Voice Learning Mode",
-        menu_history: "📜 Transaction History",
-        menu_help: "❓ Help & Support",
-        menu_info: "ℹ️ App Info/About",
-        menu_logout: "🚪 Logout",
-        welcome: "👋 Welcome back, Buggy Bunch!",
-        subtitle: "Your personalized money journey starts here 🚀",
-        card1_title: "📊 Virtual Portfolio",
-        card1_text: "Track and manage your simulated investments.",
-        card2_title: "🏆 Rewards & Badges",
-        card2_text: "See PaisaCoins, badges, and redeem options.",
-        card3_title: "📈 Leaderboard",
-        card3_text: "Compete with friends & view your rank.",
-        card4_title: "🤖 Buddy Bhalya",
-        card4_text: "AI chatbot for instant financial advice.",
-        card5_title: "❤️ Financial Health Score",
-        card5_text: "Visual score & tips to improve.",
-        card6_title: "📚 Lessons & Quizzes",
-        card6_text: "Continue streaks and quizzes.",
-        card7_title: "💰 Budget Buddy",
-        card7_text: "Daily/weekly budgeting tool.",
-        card8_title: "🎯 Goal Tracker",
-        card8_text: "Set and monitor savings goals.",
-        card9_title: "🕵️ Spot the Scam",
-        card9_text: "Play fraud identification mini-games.",
-        card10_title: "📖 Case Study Challenge",
-        card10_text: "Real-life financial decision games.",
-        card11_title: "📰 News Simplifier",
-        card11_text: "Latest finance news in Hinglish.",
-        card12_title: "👥 Community Challenges",
-        card12_text: "Join weekly savings/investment challenges."
-      },
-      hi: {
-        dashboard_title: "PaisaBuddy डैशबोर्ड",
-        btn_logout: "लॉगआउट",
-        menu_heading: "मेनू",
-        menu_profile: "👤 प्रोफ़ाइल और सेटिंग्स",
-        menu_language: "🌐 भाषा चयन",
-        menu_download: "⬇️ लेसन डाउनलोड करें",
-        menu_voice: "🎧 वॉइस लर्निंग मोड",
-        menu_history: "📜 लेन-देन का इतिहास",
-        menu_help: "❓ मदद और सपोर्ट",
-        menu_info: "ℹ️ ऐप जानकारी",
-        menu_logout: "🚪 लॉगआउट",
-        welcome: "👋 वापसी पर स्वागत है, बग्गी बंच!",
-        subtitle: "आपकी व्यक्तिगत मनी जर्नी यहाँ से शुरू होती है 🚀",
-        card1_title: "📊 वर्चुअल पोर्टफ़ोलियो",
-        card1_text: "अपने सिमुलेटेड निवेश ट्रैक और प्रबंधित करें।",
-        card2_title: "🏆 रिवार्ड्स और बैज",
-        card2_text: "PaisaCoins, बैज देखें और रिडीम करें।",
-        card3_title: "📈 लीडरबोर्ड",
-        card3_text: "दोस्तों के साथ प्रतिस्पर्धा करें और अपनी रैंक देखें।",
-        card4_title: "🤖 Buddy Bhalya",
-        card4_text: "त्वरित वित्तीय सलाह के लिए AI चैटबॉट।",
-        card5_title: "❤️ वित्तीय स्वास्थ्य स्कोर",
-        card5_text: "दृश्य स्कोर और सुधार के सुझाव।",
-        card6_title: "📚 पाठ और क्विज़",
-        card6_text: "स्ट्रीक्स और क्विज़ जारी रखें।",
-        card7_title: "💰 बजट बडी",
-        card7_text: "दैनिक/साप्ताहिक बजट टूल।",
-        card8_title: "🎯 लक्ष्य ट्रैकर",
-        card8_text: "बचत लक्ष्य सेट और मॉनिटर करें।",
-        card9_title: "🕵️ स्कैम पहचान",
-        card9_text: "धोखाधड़ी पहचान मिनी-गेम खेलें।",
-        card10_title: "📖 केस स्टडी चैलेंज",
-        card10_text: "वास्तविक जीवन वित्तीय निर्णय गेम्स।",
-        card11_title: "📰 समाचार सरलीकरण",
-        card11_text: "हिंग्लिश में नवीनतम वित्त समाचार।",
-        card12_title: "👥 सामुदायिक चुनौतियाँ",
-        card12_text: "साप्ताहिक बचत/निवेश चुनौतियों में शामिल हों।"
-      },
-      mr: {
-        dashboard_title: "PaisaBuddy डॅशबोर्ड",
-        btn_logout: "लॉगआउट",
-        menu_heading: "मेनू",
-        menu_profile: "👤 प्रोफाइल आणि सेटिंग्ज",
-        menu_language: "🌐 भाषा निवडा",
-        menu_download: "⬇️ लेसन डाउनलोड करा",
-        menu_voice: "🎧 व्हॉइस लर्निंग मोड",
-        menu_history: "📜 व्यवहार इतिहास",
-        menu_help: "❓ मदत व सपोर्ट",
-        menu_info: "ℹ️ अॅप माहिती",
-        menu_logout: "🚪 लॉगआउट",
-        welcome: "👋 परत स्वागत आहे, बग्गी बंच!",
-        subtitle: "तुमची वैयक्तिक पैशanchi यात्रा इथून सुरू होते 🚀",
-        card1_title: "📊 आभासी पोर्टफोलिओ",
-        card1_text: "तुमची सिम्युलेटेड गुंतवणूक ट्रॅक व व्यवस्थापित करा.",
-        card2_title: "🏆 बक्षिसे व बॅज",
-        card2_text: "PaisaCoins, बॅज पहा व रिडीम करा.",
-        card3_title: "📈 लीडरबोर्ड",
-        card3_text: "मित्रांशी स्पर्धा करा व तुमची रँक बघा.",
-        card4_title: "🤖 Buddy Bhalya",
-        card4_text: "त्वरित आर्थिक सल्ल्यासाठी AI चॅटबॉट.",
-        card5_title: "❤️ आर्थिक आरोग्य स्कोर",
-        card5_text: "दृश्यमान स्कोर व सुधारण्यासाठी टिप्स.",
-        card6_title: "📚 धडे व क्विझ",
-        card6_text: "स्ट्रीक व क्विझ सुरू ठेवा.",
-        card7_title: "💰 बजेट बडी",
-        card7_text: "दैनिक/साप्ताहिक बजेट साधन.",
-        card8_title: "🎯 लक्ष्य ट्रॅकर",
-        card8_text: "बचत लक्ष्य सेट व मॉनिटर करा.",
-        card9_title: "🕵️ फसवणूक शोधा",
-        card9_text: "फसवणूक ओळख मिनी-गेम खेळा.",
-        card10_title: "📖 केस स्टडी चॅलेंज",
-        card10_text: "वास्तविक आयुष्यातील आर्थिक निर्णय गेम्स.",
-        card11_title: "📰 बातम्या साध्या भाषेत",
-        card11_text: "हिंग्लिशमधील ताज्या आर्थिक बातम्या.",
-        card12_title: "👥 समुदाय आव्हाने",
-        card12_text: "साप्ताहिक बचत/गुंतवणूक आव्हानांमध्ये सहभागी व्हा."
-      }
-    };
-
-    // current language (persisted)
-    const currentLang = localStorage.getItem('lang') || 'en';
-
-    // Apply translations to all elements with data-translate
-    function applyTranslations(lang) {
-      const keys = document.querySelectorAll('[data-translate]');
-      keys.forEach(el => {
-        const key = el.getAttribute('data-translate');
-        if (translations[lang] && translations[lang][key]) {
-          el.innerHTML = translations[lang][key];
-        }
-      });
-    }
-
-    // Initialize language on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      // apply saved or default language
-      applyTranslations(currentLang);
-
-      // sidebar toggle
-      menuBtn.addEventListener('click', () => sidebar.classList.add('active'));
-      closeBtn.addEventListener('click', () => sidebar.classList.remove('active'));
-
-      // open modal
-      languageBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        languageModal.style.display = 'flex';
-      });
+    menuBtn.addEventListener("click", () => {
+      sidebar.classList.add("active");
     });
-
-    function closeModal() {
-      languageModal.style.display = 'none';
-    }
-
-    function setLanguage(lang) {
-      if (!translations[lang]) return;
-      localStorage.setItem('lang', lang);
-      applyTranslations(lang);
-      closeModal();
-    }
+    closeBtn.addEventListener("click", () => {
+      sidebar.classList.remove("active");
+    });
 
     function logout() {
       alert("Logging out... (Redirect to Landing Page)");
