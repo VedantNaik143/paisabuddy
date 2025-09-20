@@ -1,1 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paisabuddy – Your Money Mentor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Floating glowing orbs */
+    .glow {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.4;
+      animation: float 10s infinite alternate;
+    }
+    .glow1 { top: 20%; left: 10%; background: #4ade80; }
+    .glow2 { top: 60%; right: 15%; background: #818cf8; }
+    @keyframes float {
+      from { transform: translateY(0px); }
+      to { transform: translateY(40px); }
+    }
+
+    /* Navbar Active Link */
+    .active-link {
+      color: #4ade80 !important;
+      font-weight: bold;
+      text-shadow: 0 0 10px #4ade80;
+    }
+
+    /* Blur Popup Overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+    .overlay.active { display: flex; }
+
+    .popup {
+      background: #111827;
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      animation: pop 0.3s ease;
+      position: relative;
+    }
+    @keyframes pop {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .popup input {
+      background: rgba(255,255,255,0.08);
+      transition: all 0.3s;
+    }
+    .popup input:focus {
+      outline: none;
+      background: rgba(255,255,255,0.15);
+      box-shadow: 0 0 8px #4ade80;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #aaa;
+      transition: color 0.2s;
+    }
+    .close-btn:hover { color: #fff; }
+
+    /* Feature Card Glow Effect */
+    .feature-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      inset: -50%;
+      background: radial-gradient(circle, rgba(74,222,128,0.4), transparent 70%);
+      transform: scale(0);
+      transition: transform 0.5s ease;
+      border-radius: 50%;
+      z-index: 0;
+    }
+    .feature-card:hover::before {
+      transform: scale(1.5);
+    }
+    .feature-card * {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body class="relative bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white font-sans overflow-x-hidden">
+
+  <!-- Floating Effects -->
+  <div class="glow glow1"></div>
+  <div class="glow glow2"></div>
+
+  <!-- Navbar -->
+  <nav class="flex justify-between items-center px-10 py-6 bg-white/10 backdrop-blur-md rounded-2xl mx-8 mt-6 shadow-lg sticky top-4 z-40">
+    <div class="text-2xl font-bold text-indigo-300">Paisabuddy</div>
+    <ul class="flex gap-8 text-gray-200">
+      <li><a href="#home" class="nav-link hover:text-green-300">Home</a></li>
+      <li><a href="#features" class="nav-link hover:text-green-300">Features</a></li>
+      <li><a href="#about" class="nav-link hover:text-green-300">About</a></li>
+      <li><a href="#contact" class="nav-link hover:text-green-300">Contact</a></li>
+    </ul>
+    <div class="flex gap-4">
+      <button onclick="openPopup('signin')" class="px-5 py-2 rounded-xl border border-green-400 text-green-300 hover:bg-green-400/20 shadow-md">
+        Sign In
+      </button>
+      <button onclick="openPopup('signup')" class="px-5 py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-600 hover:scale-105 transition shadow-md">
+        Sign Up
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home" class="flex flex-col items-center justify-center text-center py-20 px-6 relative z-10">
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-indigo-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
+      Learn Money the Smart & Fun Way 💸
+    </h1>
+    <p class="max-w-2xl text-lg text-gray-300 mb-8">
+      Paisabuddy makes financial literacy engaging, gamified, and tailored for young Indians.  
+      Play, learn, and grow your money skills — risk-free!
+    </p>
+    <button onclick="openPopup('signup')" class="px-8 py-3 rounded-2xl bg-gradient-to-r from-green-400 to-green-600 hover:scale-105 transition shadow-lg">
+      Get Started
+    </button>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="relative px-10 py-16 text-center">
+    <div class="absolute inset-0 opacity-20 pointer-events-none">
+      <svg viewBox="0 0 500 200" preserveAspectRatio="none" class="w-full h-full">
+        <polyline fill="none" stroke="#4ade80" stroke-width="3"
+          points="0,150 100,100 200,120 300,80 400,90 500,60"/>
+        <polyline fill="none" stroke="#818cf8" stroke-width="2" stroke-dasharray="6,6"
+          points="0,170 100,140 200,160 300,120 400,110 500,100"/>
+      </svg>
+    </div>
+    <div class="grid md:grid-cols-3 gap-10 relative z-10">
+      <div class="text-4xl font-bold text-green-300">10K+ <p class="text-lg text-gray-300">Users Learning</p></div>
+      <div class="text-4xl font-bold text-purple-300">500+ <p class="text-lg text-gray-300">Quizzes Played</p></div>
+      <div class="text-4xl font-bold text-indigo-300">1K+ <p class="text-lg text-gray-300">Frauds Spotted</p></div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="px-10 py-16 relative z-10">
+    <h2 class="text-4xl font-bold text-center mb-12">🌟 Core Features</h2>
+    <div class="grid md:grid-cols-3 gap-10">
+      <div class="feature-card bg-white/10 backdrop-blur-md p-6 rounded-2xl shadow-lg hover:scale-105 transition">
+        <h3 class="text-xl font-semibold mb-3 text-green-300">📊 Virtual Portfolio</h3>
+        <p>Invest virtual money in Indian stocks & mutual funds. Track performance in real-time risk-free.</p>
+      </div>
+      <div class="feature-card bg-white/10 backdrop-blur-md p-6 rounded-2xl shadow-lg hover:scale-105 transition">
+        <h3 class="text-xl font-semibold mb-3 text-purple-300">🎮 Gamified Learning</h3>
+        <p>Bite-sized modules on SIPs, UPI, taxes & budgeting with quizzes, levels, and rewards.</p>
+      </div>
+      <div class="feature-card bg-white/10 backdrop-blur-md p-6 rounded-2xl shadow-lg hover:scale-105 transition">
+        <h3 class="text-xl font-semibold mb-3 text-indigo-300">🛡️ Fraud Challenges</h3>
+        <p>Interactive games to detect phishing, UPI scams & fake schemes before they trick you.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="px-10 py-20 text-center">
+    <h2 class="text-3xl font-bold mb-8">📖 About Us</h2>
+    <p class="max-w-3xl mx-auto text-lg text-gray-300 leading-relaxed mb-6">
+      Paisabuddy is built for students and young professionals who want to learn money management without stress.  
+      We combine <strong>real-world financial knowledge</strong> with fun, interactive learning tools so you can practice risk-free and build confidence for real-life decisions.
+    </p>
+    <div class="flex justify-center gap-6">
+      <div class="p-4 bg-white/10 rounded-xl w-60">
+        <h3 class="text-lg font-semibold text-green-300">Our Vision</h3>
+        <p class="text-sm text-gray-400 mt-2">To make financial literacy accessible & fun for every Indian youth.</p>
+      </div>
+      <div class="p-4 bg-white/10 rounded-xl w-60">
+        <h3 class="text-lg font-semibold text-indigo-300">Our Mission</h3>
+        <p class="text-sm text-gray-400 mt-2">Empowering millions with money skills through gamification.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="px-10 py-20 text-center">
+    <h2 class="text-3xl font-bold mb-8">📩 Contact Us</h2>
+    <p class="text-gray-300 mb-6">Have questions? Reach out anytime!</p>
+    <form class="max-w-xl mx-auto space-y-4">
+      <input type="text" placeholder="Your Name" class="w-full px-4 py-2 rounded-lg bg-white/10 text-white"/>
+      <input type="email" placeholder="Your Email" class="w-full px-4 py-2 rounded-lg bg-white/10 text-white"/>
+      <textarea placeholder="Your Message" rows="4" class="w-full px-4 py-2 rounded-lg bg-white/10 text-white"></textarea>
+      <button class="px-6 py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-600 hover:scale-105 transition shadow-lg">Send Message</button>
+    </form>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="text-center py-20 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 backdrop-blur-md rounded-2xl mx-10 my-10 shadow-xl">
+    <h2 class="text-3xl font-bold mb-6">🚀 Ready to become Money Smart?</h2>
+    <button onclick="openPopup('signup')" class="px-8 py-3 rounded-2xl bg-gradient-to-r from-green-400 to-green-600 hover:scale-105 transition shadow-lg">
+      Join Now
+    </button>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-6 text-center text-gray-400">
+    © 2025 Paisabuddy | Built for Hackathon
+  </footer>
+
+  <!-- Sign In / Sign Up Popups -->
+  <div id="popup-overlay" class="overlay">
+    <div id="signin-popup" class="popup hidden">
+      <span class="close-btn" onclick="closePopup()">✖</span>
+      <h2 class="text-2xl font-bold mb-4">Sign In</h2>
+      <input type="text" placeholder="Username" class="w-full mb-3 px-4 py-2 rounded"/>
+      <input type="email" placeholder="Gmail" class="w-full mb-3 px-4 py-2 rounded"/>
+      <input type="password" placeholder="Password" class="w-full mb-3 px-4 py-2 rounded"/>
+      <button class="w-full px-4 py-2 rounded bg-green-500 hover:bg-green-600">Login</button>
+      <p class="mt-3 text-sm text-gray-400">Don’t have an account? <a href="#" onclick="switchPopup('signup')" class="text-green-400">Sign Up</a></p>
+    </div>
+
+    <div id="signup-popup" class="popup hidden">
+      <span class="close-btn" onclick="closePopup()">✖</span>
+      <h2 class="text-2xl font-bold mb-4">Sign Up</h2>
+      <input type="text" placeholder="Full Name" class="w-full mb-3 px-4 py-2 rounded"/>
+      <input type="text" placeholder="Username" class="w-full mb-3 px-4 py-2 rounded"/>
+      <input type="email" placeholder="Gmail" class="w-full mb-3 px-4 py-2 rounded"/>
+      <input type="password" placeholder="Password" class="w-full mb-3 px-4 py-2 rounded"/>
+      <button class="w-full px-4 py-2 rounded bg-green-500 hover:bg-green-600">Register</button>
+      <p class="mt-3 text-sm text-gray-400">Already have an account? <a href="#" onclick="switchPopup('signin')" class="text-green-400">Sign In</a></p>
+    </div>
+  </div>
+
+  <script>
+    // Popup Functions
+    const overlay = document.getElementById("popup-overlay");
+    const signin = document.getElementById("signin-popup");
+    const signup = document.getElementById("signup-popup");
+
+    function openPopup(type) {
+      overlay.classList.add("active");
+      signin.classList.add("hidden");
+      signup.classList.add("hidden");
+      if(type === "signin") signin.classList.remove("hidden");
+      if(type === "signup") signup.classList.remove("hidden");
+    }
+    function switchPopup(type) { openPopup(type); }
+    function closePopup() { overlay.classList.remove("active"); }
+    overlay.addEventListener("click", (e) => { if(e.target === overlay) closePopup(); });
+
+    // Navbar Active Highlight on Scroll
+    const sections = document.querySelectorAll("section");
+    const navLinks = document.querySelectorAll(".nav-link");
+
+    window.addEventListener("scroll", () => {
+      let current = "";
+      sections.forEach(sec => {
+        const secTop = sec.offsetTop - 80;
+        if (scrollY >= secTop) current = sec.getAttribute("id");
+      });
+      navLinks.forEach(link => {
+        link.classList.remove("active-link");
+        if(link.getAttribute("href").includes(current)) {
+          link.classList.add("active-link");
+        }
+      });
+    });
+
+    // Smooth Scrolling (slower effect)
+    navLinks.forEach(link => {
+      link.addEventListener("click", function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute("href").substring(1);
+        const target = document.getElementById(targetId);
+        window.scrollTo({
+          top: target.offsetTop - 60,
+          behavior: "smooth"
+        });
+      });
+    });
+  </script>
+</body>
+</html>
 
