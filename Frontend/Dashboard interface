@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PaisaBuddy – Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Floating glowing orbs */
+    .glow {
+      position: absolute; width: 200px; height: 200px;
+      border-radius: 50%; filter: blur(100px); opacity: 0.4;
+      animation: float 10s infinite alternate;
+    }
+    .glow1 { top: 20%; left: 10%; background: #4ade80; }
+    .glow2 { top: 60%; right: 15%; background: #818cf8; }
+    @keyframes float { from { transform: translateY(0px);} to { transform: translateY(40px);} }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px; background: #111827; height: 100vh;
+      position: fixed; top: 0; left: -260px; transition: left 0.35s ease-in-out;
+      z-index: 50; padding: 2rem 1rem;
+      box-shadow: 4px 0 15px rgba(0,0,0,0.4);
+    }
+    .sidebar.active { left: 0; }
+    .sidebar a {
+      display: block; padding: 0.75rem 1rem; color: #aaa;
+      border-radius: 0.5rem; margin-bottom: 0.5rem; transition: all 0.3s ease;
+    }
+    .sidebar a:hover { background: #1f2937; color: #4ade80; padding-left: 1.5rem; }
+
+    /* Feature cards */
+    .feature-card {
+      background: #1e293b; padding: 1.5rem;
+      border-radius: 1rem; box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.6s;
+      opacity: 0; transform: translateY(20px);
+    }
+    .feature-card.show {
+      opacity: 1; transform: translateY(0);
+    }
+    .feature-card:hover {
+      transform: translateY(-8px) scale(1.03);
+      box-shadow: 0 0 25px rgba(74,222,128,0.5);
+    }
+  </style>
+</head>
+<body class="relative bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white font-sans overflow-x-hidden">
+
+  <!-- Floating Effects -->
+  <div class="glow glow1"></div>
+  <div class="glow glow2"></div>
+
+  <!-- Navbar -->
+  <nav class="flex justify-between items-center px-6 py-4 bg-white/10 backdrop-blur-md shadow-lg sticky top-0 z-40">
+    <div class="flex items-center gap-4">
+      <button id="menu-btn" class="text-2xl">&#9776;</button>
+      <h1 class="text-2xl font-bold text-indigo-300">PaisaBuddy Dashboard</h1>
+    </div>
+    <button onclick="logout()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-red-400 to-red-600 hover:scale-105 transition shadow-md">
+      Logout
+    </button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-bold text-green-400">Menu</h2>
+      <button id="close-btn" class="text-gray-400 text-2xl hover:text-red-400">&times;</button>
+    </div>
+    <a href="#">👤 Profile & Settings</a>
+    <a href="#">🌐 Language Selector</a>
+    <a href="#">⬇️ Download Lessons</a>
+    <a href="#">🎧 Voice Learning Mode</a>
+    <a href="#">📜 Transaction History</a>
+    <a href="#">❓ Help & Support</a>
+    <a href="#">ℹ️ App Info/About</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </aside>
+
+  <!-- Dashboard Main -->
+  <main class="px-6 py-10 md:px-12">
+    <!-- Greeting -->
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold mb-4">👋 Welcome back, Buggy Bunch!</h2>
+      <p class="text-lg text-indigo-200">Your personalized money journey starts here 🚀</p>
+    </div>
+
+    <!-- Cards -->
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div class="feature-card"><h3 class="text-lg font-semibold text-green-300 mb-2">📊 Virtual Portfolio</h3><p>Track and manage your simulated investments.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-yellow-300 mb-2">🏆 Rewards & Badges</h3><p>See PaisaCoins, badges, and redeem options.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-purple-300 mb-2">📈 Leaderboard</h3><p>Compete with friends & view your rank.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-pink-300 mb-2">🤖 Buddy Bhalya</h3><p>AI chatbot for instant financial advice.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-indigo-300 mb-2">❤️ Financial Health Score</h3><p>Visual score & tips to improve.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-green-300 mb-2">📚 Lessons & Quizzes</h3><p>Continue streaks and quizzes.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-orange-300 mb-2">💰 Budget Buddy</h3><p>Daily/weekly budgeting tool.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-teal-300 mb-2">🎯 Goal Tracker</h3><p>Set and monitor savings goals.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-red-300 mb-2">🕵️ Spot the Scam</h3><p>Play fraud identification mini-games.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-blue-300 mb-2">📖 Case Study Challenge</h3><p>Real-life financial decision games.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-lime-300 mb-2">📰 News Simplifier</h3><p>Latest finance news in Hinglish.</p></div>
+      <div class="feature-card"><h3 class="text-lg font-semibold text-fuchsia-300 mb-2">👥 Community Challenges</h3><p>Join weekly savings/investment challenges.</p></div>
+    </div>
+  </main>
+
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const menuBtn = document.getElementById("menu-btn");
+    const closeBtn = document.getElementById("close-btn");
+
+    menuBtn.addEventListener("click", () => {
+      sidebar.classList.add("active");
+    });
+    closeBtn.addEventListener("click", () => {
+      sidebar.classList.remove("active");
+    });
+
+    function logout() {
+      alert("Logging out... (Redirect to Landing Page)");
+      window.location.href = "index.html"; // Replace with your landing page
+    }
+
+    // Animate feature cards on load
+    window.addEventListener("load", () => {
+      document.querySelectorAll(".feature-card").forEach((card, i) => {
+        setTimeout(() => card.classList.add("show"), i * 150);
+      });
+    });
+  </script>
+</body>
+</html>
