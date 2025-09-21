@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PaisaBuddy — Rewards & Badges</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* ========== Theme ========== */
+    :root{
+      --bg-1:#0b1220; --bg-2:#13182b;
+      --accent:#4ade80; --accent2:#60a5fa; --muted:#94a3b8;
+      --card-bg: rgba(255,255,255,0.02);
+    }
+    html,body{ height:100%; }
+    body{
+      min-height:100%;
+      background: linear-gradient(135deg,var(--bg-1) 0%, var(--bg-2) 55%, #0f1724 100%);
+      color:#e6eef8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      overflow-y:auto;
+    }
+
+    /* Neon card */
+    .neon-card{
+      background: linear-gradient(180deg,var(--card-bg), rgba(255,255,255,0.01));
+      border-radius: 14px;
+      border: 1px solid rgba(74,222,128,0.06);
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    }
+
+    /* Reward card */
+    .reward-card{
+      background: linear-gradient(180deg,var(--card-bg), rgba(255,255,255,0.01));
+      border-radius: 12px;
+      border: 1px solid rgba(96,165,250,0.06);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+    .reward-card:hover{
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 18px 40px rgba(96,165,250,0.06);
+    }
+
+    /* card bottom aura */
+    .reward-card::after {
+      content: "";
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 12px;
+      background: radial-gradient(ellipse at center, rgba(96,165,250,0.45), transparent 70%);
+      filter: blur(8px);
+      opacity: 0.6;
+      transition: opacity .3s ease;
+    }
+    .reward-card:hover::after { opacity: 1; }
+
+    /* Ribbons */
+    .ribbon { position:absolute; top:10px; right:-36px; transform:rotate(45deg); width:160px; text-align:center; font-weight:700; padding:6px 0; color:#071024; box-shadow:0 4px 14px rgba(2,6,23,0.55); }
+    .ribbon.common{ background: linear-gradient(90deg,#60a5fa,#3b82f6); }
+    .ribbon.rare{ background: linear-gradient(90deg,#8b5cf6,#7c3aed); color:#fff; }
+    .ribbon.legend{ background: linear-gradient(90deg,#facc15,#f97316); color:#071024; }
+
+    /* Buttons */
+    .primary-btn{
+      background: linear-gradient(90deg,var(--accent2),#7c3aed);
+      color:#041124;
+      font-weight:700;
+      padding:8px 12px;
+      border-radius:10px;
+      box-shadow: 0 8px 30px rgba(99,102,241,0.12);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .primary-btn:hover{ transform: translateY(-2px); box-shadow: 0 16px 40px rgba(99,102,241,0.18); }
+    .primary-btn:active{ transform: translateY(0); }
+
+    /* back button style */
+    .back-btn{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:8px 14px; border-radius:12px; font-weight:600;
+      background: linear-gradient(90deg,#f472b6,#ec4899); color:white; box-shadow:0 10px 30px rgba(236,72,153,0.15);
+    }
+    .back-btn:hover{ transform:scale(1.03); box-shadow:0 18px 48px rgba(236,72,153,0.28); }
+
+    /* XP shimmer */
+    #xpFill { position:relative; overflow:hidden; }
+    #xpFill::after{ content:""; position:absolute; top:0; left:-40%; width:40%; height:100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); animation: xp-shine 3s linear infinite; }
+    @keyframes xp-shine { 0%{left:-40%} 100%{left:100%} }
+
+    /* Claim pulse */
+    #claimBtn { animation: claim-pulse 2s ease-in-out infinite; }
+    @keyframes claim-pulse {
+      0%,100%{ box-shadow: 0 0 12px rgba(96,165,250,0.5), 0 0 24px rgba(74,222,128,0.25); }
+      50%{ box-shadow: 0 0 22px rgba(74,222,128,0.9), 0 0 40px rgba(96,165,250,0.65); transform:translateY(-2px); }
+    }
+
+    /* Toast */
+    .toast{ position: fixed; right:20px; bottom:20px; z-index:160; padding:12px 16px; border-radius:10px; background:linear-gradient(90deg,#0f172a,#071024); border:1px solid rgba(74,222,128,0.06); box-shadow:0 8px 30px rgba(2,6,23,0.6); transition: transform .2s, opacity .2s; }
+
+    /* Popup reward */
+    #rewardPopup{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:200; }
+    #rewardPopup .popup-back{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(2,6,23,0.65), rgba(2,6,23,0.75)); backdrop-filter: blur(6px); }
+    .reward-panel{ position:relative; z-index:201; background: linear-gradient(135deg,#0f172a,#081226); border-radius:14px; padding:28px; width:92%; max-width:420px; text-align:center; border:1px solid rgba(96,165,250,0.12); box-shadow: 0 18px 60px rgba(2,6,23,0.8), 0 0 40px rgba(96,165,250,0.12); transform: scale(.72); opacity:0; animation: popup-in .55s cubic-bezier(.2,.9,.3,1) forwards; }
+    @keyframes popup-in{ 0%{ transform:scale(.72); opacity:0; } 60%{ transform:scale(1.08); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
+    .reward-title{ color:#fef3c7; font-weight:800; font-size:1.3rem; margin-bottom:6px; text-shadow:0 6px 18px rgba(250,204,21,0.12); }
+    .reward-amount{ font-size:2.6rem; font-weight:900; color:#4ade80; margin-bottom:6px; text-shadow: 0 10px 30px rgba(74,222,128,0.14); }
+
+    /* store & leaderboard modal basic style */
+    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:190; }
+    .modal-back{ position:absolute; inset:0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); }
+    .modal-card{ position:relative; z-index:191; background: linear-gradient(180deg,#071024,#081226); border:1px solid rgba(96,165,250,0.08); padding:18px; border-radius:12px; width:96%; max-width:720px; color:#e6eef8; box-shadow: 0 20px 60px rgba(2,6,23,0.8); }
+
+    /* small particle (ambient) */
+    .particle{ position:fixed; border-radius:50%; pointer-events:none; opacity:.5; z-index:0; }
+
+    /* responsive tweaks */
+    @media (max-width:640px){ .neon-card{ margin: 0 12px } .reward-panel{ padding:20px } }
+  </style>
+</head>
+<body>
+
+  <!-- confetti container -->
+  <div id="confetti-root" style="position:fixed;inset:0;pointer-events:none;z-index:170"></div>
+
+  <!-- reward popup (center) -->
+  <div id="rewardPopup" aria-hidden="true">
+    <div class="popup-back" onclick="closeRewardPopup()"></div>
+    <div class="reward-panel" role="dialog" aria-modal="true">
+      <div id="rewardTitle" class="reward-title">🎉 Reward Claimed!</div>
+      <div id="rewardAmount" class="reward-amount">+30 Coins</div>
+      <div id="rewardSub" class="muted small">Streak +1</div>
+      <div class="mt-4">
+        <button class="primary-btn" onclick="closeRewardPopup()">Awesome</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Store Modal -->
+  <div id="storeModal" class="modal" aria-hidden="true">
+    <div class="modal-back" onclick="closeStoreModal()"></div>
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Redeem Store</h3>
+        <button onclick="closeStoreModal()" class="px-3 py-1 rounded bg-white/5">Close</button>
+      </div>
+      <div id="storeItems" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboardModal" class="modal" aria-hidden="true">
+    <div class="modal-back" onclick="closeLeaderboardModal()"></div>
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Leaderboard</h3>
+        <button onclick="closeLeaderboardModal()" class="px-3 py-1 rounded bg-white/5">Close</button>
+      </div>
+      <div id="leaderboardList" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <nav class="neon-card mx-6 mt-6 p-4 flex items-center justify-between z-10 relative">
+    <div class="flex items-center gap-4">
+      <a href="../dashboard.html" class="back-btn">⬅ Dashboard</a>
+      <h1 class="text-xl font-bold">🏆 Rewards Hub</h1>
+      <span class="ml-3 text-sm muted">Collect coins, unlock badges & level up</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="claimBtn" class="primary-btn">Claim Daily</button>
+      <button id="openStoreBtn" class="px-3 py-2 rounded-lg" style="background:linear-gradient(90deg,#22c55e,#06b6d4); color:#041024; font-weight:700; box-shadow:0 8px 30px rgba(34,197,94,0.08)">🛒 Store</button>
+      <button id="openLeaderboardBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">🏅 Leaderboard</button>
+    </div>
+  </nav>
+
+  <!-- Main grid -->
+  <main class="px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+
+    <!-- Left: badges / main -->
+    <section class="lg:col-span-2 space-y-6">
+      <div class="neon-card p-4 flex items-center justify-between gap-6">
+        <div>
+          <div class="text-sm muted">Coins</div>
+          <div id="coins" class="text-2xl font-bold">0</div>
+        </div>
+
+        <div>
+          <div class="text-sm muted">Level</div>
+          <div class="text-2xl font-bold">3</div>
+          <div class="small muted mt-1">XP <span id="xpText">1200</span> / <span id="xpGoal">2000</span></div>
+          <div class="w-64 mt-2 rounded-full bg-white/5" style="height:12px;">
+            <div id="xpFill" style="height:100%; width:60%; background:linear-gradient(90deg,#60a5fa,#4ade80); border-radius:9999px"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="text-sm muted">Streak</div>
+          <div id="streak" class="text-2xl font-bold">0 days</div>
+          <div class="small muted mt-1">Keep logging in — more streak = bigger rewards</div>
+        </div>
+
+        <div class="text-right">
+          <div class="text-sm muted">Next milestone</div>
+          <div id="nextBadge" class="text-md font-semibold">Investor Badge — 200 coins</div>
+          <div class="small muted mt-1">Complete steps to unlock</div>
+        </div>
+      </div>
+
+      <div class="neon-card p-4 flex gap-6 items-center">
+        <div class="w-1/6 text-center text-3xl">🎯</div>
+        <div class="w-5/6">
+          <div class="font-semibold">How to earn</div>
+          <ul class="muted small mt-2 list-disc list-inside">
+            <li>Claim daily bonus (button on top) — keeps streak alive.</li>
+            <li>Complete trades & lessons to earn coins & XP.</li>
+            <li>Unlock badges to get coin bonuses and store perks.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div id="badgesContainer" class="space-y-4"></div>
+      </div>
+    </section>
+
+    <!-- Right: sidebar -->
+    <aside class="space-y-4">
+      <div class="neon-card p-4">
+        <div class="flex items-center justify-between">
+          <div><div class="muted small">Total Coins</div><div id="coinsSide" class="text-2xl font-bold">0</div></div>
+          <div><div class="muted small">Total Badges</div><div id="badgesCount" class="text-2xl font-bold">0</div></div>
+        </div>
+
+        <hr class="my-3 border-white/6">
+        <div class="muted small">Quick actions</div>
+        <div class="mt-3 flex gap-2">
+          <button id="openStore" class="w-full px-3 py-2 rounded-md bg-gradient-to-r from-indigo-600 to-violet-600 text-white small">Redeem Store</button>
+          <button id="openLeaderboard" class="w-full px-3 py-2 rounded-md bg-white/5 small">Leaderboard</button>
+        </div>
+      </div>
+
+      <div class="neon-card p-4">
+        <div class="font-semibold">Recent activity</div>
+        <div id="history" class="mt-3 space-y-2 small muted"></div>
+      </div>
+
+      <div class="neon-card p-4">
+        <div class="font-semibold">Next badges (progress)</div>
+        <div id="nextList" class="mt-3 small muted"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Unlock Modal -->
+  <div id="unlockModal" class="fixed inset-0 hidden items-center justify-center z-60">
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="relative z-10 neon-card p-6 w-full max-w-lg">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-semibold">Unlock Badge</h3>
+        <button id="closeModal" class="text-gray-300">✖</button>
+      </div>
+      <div id="unlockBody"></div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button id="cancelUnlock" class="px-3 py-2 bg-white/5 rounded-md">Cancel</button>
+        <button id="confirmUnlock" class="px-3 py-2 primary-btn">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- toast container -->
+  <div id="toastRoot" style="position:fixed;right:20px;bottom:20px;z-index:210"></div>
+
+  <script>
+  /**************************************************************************
+   * Rewards page JS
+   **************************************************************************/
+
+  const STORAGE_KEY = 'paisa_rewards_state_v1';
+
+  const BADGES = [
+    { id:'novice',   name:'Novice Trader',   desc:'First trade completed', rarity:'common', cost:0, reward:20 },
+    { id:'saver',    name:'Saver',           desc:'Saved ₹1000 in portfolio', rarity:'rare', cost:120, reward:120 },
+    { id:'investor', name:'Investor',        desc:'Complete 5 trades', rarity:'rare', cost:200, reward:200 },
+    { id:'streak7',  name:'7-Day Streak',    desc:'Log in 7 days consecutively', rarity:'legend', cost:0, reward:500, requiresStreak:7 },
+    { id:'legend',   name:'Market Legend',   desc:'100 trades completed', rarity:'legend', cost:1000, reward:2000 }
+  ];
+
+  const STORE_ITEMS = [
+    { id:'badge_frame', name:'Badge Frame', cost:150, desc:'Decorative frame for badges' },
+    { id:'profile_badge', name:'Profile Badge (Gold)', cost:1200, desc:'Showcase gold badge on profile' },
+    { id:'theme_pack', name:'Theme Pack (Neon)', cost:300, desc:'Unlock premium app theme' },
+    { id:'mock_boost', name:'Trade Boost (7d)', cost:500, desc:'Small simulated boost (demo)' }
+  ];
+
+  // state
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  if (!state) {
+    state = {
+      coins: 2350,
+      streak: 7,
+      lastClaim: null,
+      unlocked: ['novice'],
+      history: [
+        {type:'claim', label:'Daily claim', coins:50, date: new Date().toISOString() },
+        {type:'unlock', label:'Unlocked Novice Trader', coins:20, date: new Date().toISOString() }
+      ],
+      xp: 1200
+    };
+    saveState();
+  }
+  function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  /* ---------- helpers ---------- */
+  function fmtDate(d){ return new Date(d).toLocaleString(); }
+  function isToday(isoDay){ if(!isoDay) return false; return new Date().toISOString().slice(0,10) === isoDay; }
+  function yesterdayISO(){ const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+  /* ---------- renderers ---------- */
+  function renderStats(){
+    animateNumber(document.getElementById('coins'), state.coins);
+    animateNumber(document.getElementById('coinsSide'), state.coins);
+    document.getElementById('streak').innerText = state.streak + ' days';
+    document.getElementById('badgesCount').innerText = state.unlocked.length;
+    document.getElementById('nextBadge').innerText = nextBadgeText();
+    const xpGoal = 2000;
+    document.getElementById('xpText').innerText = state.xp || 0;
+    document.getElementById('xpGoal').innerText = xpGoal;
+    const pct = Math.min(100, Math.round(((state.xp || 0) / xpGoal) * 100));
+    document.getElementById('xpFill').style.width = pct + '%';
+  }
+
+  function nextBadgeText(){
+    const locked = BADGES.filter(b => !state.unlocked.includes(b.id));
+    if (locked.length) return `${locked[0].name} — ${locked[0].cost} coins`;
+    return 'All badges unlocked';
+  }
+
+  function renderHistory(){
+    const root = document.getElementById('history'); root.innerHTML = '';
+    const list = state.history.slice().reverse().slice(0,8);
+    list.forEach(h => {
+      const el = document.createElement('div');
+      el.className = 'flex justify-between items-center bg-white/3 rounded-md p-2';
+      el.innerHTML = `<div>
+          <div class="font-semibold">${h.label}</div>
+          <div class="muted small">${fmtDate(h.date)}</div>
+        </div>
+        <div class="font-bold ${h.coins>0? 'text-green-400' : 'text-red-400'}">${h.coins>0? '+'+h.coins : h.coins}</div>`;
+      root.appendChild(el);
+    });
+  }
+
+  function renderBadges(){
+    const root = document.getElementById('badgesContainer'); root.innerHTML = '';
+    BADGES.forEach(b => {
+      const unlocked = state.unlocked.includes(b.id);
+      const card = document.createElement('div'); card.className = 'reward-card flex items-center gap-4';
+      card.innerHTML = `
+        <div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01)); box-shadow: inset 0 4px 16px rgba(0,0,0,0.35);">
+          <img src="../assets/${b.id}.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'80\\' height=\\'80\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23343445\\'/><text x=\\'50%\\' y=\\'55%\\' font-size=\\'12\\' fill=\\'%23fff\\' text-anchor=\\'middle\\'>${b.name.split(' ')[0]}</text></svg>'" alt="${b.name}" style="width:68px;height:68px;object-fit:contain;" />
+        </div>
+        <div style="flex:1">
+          <div class="font-semibold">${b.name} ${unlocked?'<span class="text-sm muted">(unlocked)</span>':''}</div>
+          <div class="small muted mt-1">${b.desc}</div>
+          <div class="small muted mt-2">Reward: <span class="text-green-300 font-medium">+${b.reward} coins</span> ${b.cost?('| cost: '+b.cost+' coins'):''}</div>
+        </div>
+        <div style="min-width:120px;text-align:right">
+          <button class="primary-btn" ${unlocked? 'disabled':''} data-badge="${b.id}">${unlocked? 'Owned':'Unlock'}</button>
+        </div>
+      `;
+      const r = document.createElement('div');
+      r.className = 'ribbon ' + (b.rarity==='rare' ? 'rare' : (b.rarity==='legend' ? 'legend' : 'common'));
+      r.innerText = b.rarity.toUpperCase();
+      card.appendChild(r);
+      root.appendChild(card);
+    });
+
+    // attach handlers
+    root.querySelectorAll('button[data-badge]').forEach(btn => {
+      btn.addEventListener('click', (e) => openUnlockModal(e.currentTarget.dataset.badge));
+    });
+  }
+
+  function renderNextList(){
+    const nroot = document.getElementById('nextList'); nroot.innerHTML = '';
+    const pending = BADGES.filter(b => !state.unlocked.includes(b.id));
+    pending.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'flex items-center justify-between small muted py-1';
+      el.innerHTML = `<div>${p.name}</div><div>${p.cost? p.cost+' coins' : (p.requiresStreak? 'streak: '+p.requiresStreak : 'reward') }</div>`;
+      nroot.appendChild(el);
+    });
+  }
+
+  function addHistory(type, label, coins){
+    state.history.push({type,label,coins,date:new Date().toISOString()});
+    if (state.history.length > 200) state.history.shift();
+  }
+
+  /* ---------- confetti ---------- */
+  function launchConfetti(){
+    const root = document.getElementById('confetti-root');
+    const colors = ['#60a5fa','#4ade80','#facc15','#fb7185','#a78bfa'];
+    for(let i=0;i<30;i++){
+      const el = document.createElement('div'); el.className = 'confetti-piece';
+      el.style.left = (5 + Math.random()*90) + 'vw';
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.top = '-10vh'; el.style.opacity = 1;
+      el.style.width = (6 + Math.random()*10) + 'px';
+      el.style.height = (10 + Math.random()*12) + 'px';
+      el.style.borderRadius = (2 + Math.random()*2) + 'px';
+      el.style.animation = `confetti-fall ${1.6 + Math.random()*1.6}s linear forwards`;
+      root.appendChild(el);
+      setTimeout(()=> el.remove(), 3200);
+    }
+  }
+
+  /* ---------- toast ---------- */
+  function showToast(text, ms=3000){
+    const r = document.getElementById('toastRoot');
+    const t = document.createElement('div'); t.className = 'toast'; t.innerText = text;
+    r.appendChild(t);
+    requestAnimationFrame(()=> { t.style.transform = 'translateY(-6px)'; t.style.opacity = '1'; });
+    setTimeout(()=> { t.style.opacity = '0'; t.style.transform = 'translateY(0)'; setTimeout(()=> t.remove(), 350); }, ms);
+  }
+
+  /* ---------- modal / unlock ---------- */
+  const unlockModal = document.getElementById('unlockModal');
+  const unlockBody = document.getElementById('unlockBody');
+  const closeModal = document.getElementById('closeModal');
+  const cancelUnlock = document.getElementById('cancelUnlock');
+  const confirmUnlock = document.getElementById('confirmUnlock');
+  let currentUnlockId = null;
+
+  function openUnlockModal(badgeId){
+    currentUnlockId = badgeId;
+    const b = BADGES.find(x => x.id === badgeId);
+    unlockBody.innerHTML = `
+      <div class="flex gap-4 items-center">
+        <img src="../assets/${b.id}.png" onerror="this.src=''" alt="" style="width:84px;height:84px;object-fit:contain;border-radius:8px;background:linear-gradient(90deg,#0b1220,#13182b);"/>
+        <div>
+          <div class="font-semibold">${b.name}</div>
+          <div class="muted small mt-1">${b.desc}</div>
+          <div class="small muted mt-2">Reward: <strong class="text-green-300">+${b.reward} coins</strong></div>
+          ${b.cost? `<div class="small muted mt-1">Cost: <strong>${b.cost} coins</strong></div>` : ''}
+          ${b.requiresStreak? `<div class="small muted mt-1">Requires streak: ${b.requiresStreak} days</div>` : ''}
+        </div>
+      </div>
+    `;
+    unlockModal.classList.remove('hidden'); unlockModal.classList.add('flex');
+  }
+  function closeUnlockModal(){ unlockModal.classList.add('hidden'); unlockModal.classList.remove('flex'); currentUnlockId = null; }
+  closeModal.addEventListener('click', closeUnlockModal);
+  cancelUnlock.addEventListener('click', closeUnlockModal);
+
+  confirmUnlock.addEventListener('click', ()=>{
+    if(!currentUnlockId) return;
+    const b = BADGES.find(x => x.id === currentUnlockId);
+    if(b.cost && state.coins < b.cost){ showToast('Not enough coins to unlock'); return; }
+    if(b.requiresStreak && state.streak < b.requiresStreak){ showToast('Streak requirement not met'); return; }
+    if(b.cost) state.coins -= b.cost;
+    state.coins += b.reward;
+    if(!state.unlocked.includes(b.id)) state.unlocked.push(b.id);
+    addHistory('unlock', `Unlocked ${b.name}`, b.reward);
+    saveState(); renderAll();
+    closeUnlockModal();
+    launchConfetti();
+    showToast(`Unlocked ${b.name} (+${b.reward} coins)`);
+  });
+
+  /* ---------- Reward Popup (Claim) ---------- */
+  const rewardPopup = document.getElementById('rewardPopup');
+  function showRewardPopup(amount, subtitle = 'Streak increased'){
+    document.getElementById('rewardTitle').innerText = '🎉 Reward Claimed!';
+    document.getElementById('rewardAmount').innerText = `+${amount} Coins`;
+    document.getElementById('rewardSub').innerText = subtitle;
+    rewardPopup.style.display = 'flex';
+    setTimeout(()=> closeRewardPopup(), 2600);
+  }
+  function closeRewardPopup(){ rewardPopup.style.display = 'none'; }
+
+  /* ---------- Claim daily ---------- */
+  document.getElementById('claimBtn').addEventListener('click', ()=>{
+    const today = new Date().toISOString().slice(0,10);
+    if (isToday(state.lastClaim)) { showToast('You already claimed today'); return; }
+
+    const yesterday = yesterdayISO();
+    if (state.lastClaim === yesterday) { state.streak = (state.streak || 0) + 1; }
+    else { state.streak = 1; }
+
+    const base = 50;
+    let bonus = 0;
+    if (state.streak > 0 && (state.streak % 7 === 0)) bonus = 100;
+    const total = base + bonus;
+
+    state.coins = Number((state.coins + total).toFixed(2));
+    state.lastClaim = today;
+    addHistory('claim', 'Daily claim', total);
+    saveState();
+    renderAll();
+
+    // Award feedback
+    launchConfetti();
+    showRewardPopup(total, `Streak: ${state.streak} day${state.streak>1?'s':''}`);
+    showToast(`Claimed ${total} coins`);
+  });
+
+  /* ---------- store modal ---------- */
+  const storeModal = document.getElementById('storeModal');
+  const openStoreBtn = document.getElementById('openStore');
+  const openStoreBtnTop = document.getElementById('openStoreBtn');
+  function openStoreModal(){
+    renderStore();
+    storeModal.style.display = 'flex';
+  }
+  function closeStoreModal(){ storeModal.style.display = 'none'; }
+  document.getElementById('openStore').addEventListener('click', openStoreModal);
+  document.getElementById('openStoreBtn').addEventListener('click', openStoreModal);
+
+  function renderStore(){
+    const root = document.getElementById('storeItems');
+    root.innerHTML = '';
+    STORE_ITEMS.forEach(item=>{
+      const el = document.createElement('div');
+      el.className = 'p-3 rounded neon-card flex items-start gap-3';
+      el.innerHTML = `
+        <div class="w-14 h-14 rounded-lg bg-white/5 flex items-center justify-center text-xl font-bold">${item.name.split(' ')[0].charAt(0)}</div>
+        <div class="flex-1">
+          <div class="font-semibold">${item.name}</div>
+          <div class="small muted">${item.desc}</div>
+        </div>
+        <div class="text-right">
+          <div class="font-semibold">${item.cost} coins</div>
+          <button class="mt-2 px-3 py-1 rounded-md primary-btn" data-item="${item.id}">Redeem</button>
+        </div>
+      `;
+      root.appendChild(el);
+    });
+    // attach handlers
+    root.querySelectorAll('button[data-item]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const id = e.currentTarget.dataset.item;
+        const itm = STORE_ITEMS.find(s=>s.id===id);
+        if(!itm) return;
+        if(state.coins < itm.cost) { showToast('Not enough coins to redeem'); return; }
+        state.coins -= itm.cost;
+        addHistory('redeem', `Redeemed ${itm.name}`, -itm.cost);
+        saveState(); renderAll(); showToast(`Redeemed ${itm.name}`); launchConfetti();
+        // optionally mark as redeemed, etc.
+      });
+    });
+  }
+
+  /* ---------- leaderboard modal ---------- */
+  const leaderboardModal = document.getElementById('leaderboardModal');
+  function openLeaderboardModal(){ renderLeaderboard(); leaderboardModal.style.display = 'flex'; }
+  function closeLeaderboardModal(){ leaderboardModal.style.display = 'none'; }
+  document.getElementById('openLeaderboard').addEventListener('click', openLeaderboardModal);
+  document.getElementById('openLeaderboardBtn').addEventListener('click', openLeaderboardModal);
+
+  function renderLeaderboard(){
+    const list = [
+      { name:'Asha', coins:9800 },
+      { name:'Rahul', coins:8600 },
+      { name:'You', coins: state.coins },
+      { name:'Meera', coins:4200 },
+      { name:'Kumar', coins:3200 }
+    ];
+    const root = document.getElementById('leaderboardList'); root.innerHTML = '';
+    list.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'p-2 rounded flex items-center gap-3 ' + (p.name==='You' ? 'bg-white/6' : 'bg-white/3');
+      row.innerHTML = `<div class="w-10 text-center font-bold">${i+1}</div>
+        <div class="flex-1">
+          <div class="font-semibold">${p.name}${p.name==='You' ? ' (You)' : ''}</div>
+        </div>
+        <div class="font-bold text-right">${p.coins.toLocaleString('en-IN')}</div>`;
+      root.appendChild(row);
+    });
+  }
+
+  /* ---------- spawn ambient particles ---------- */
+  (function spawnParticles(){
+    function make(){
+      const el = document.createElement('div'); el.className = 'particle';
+      const size = 6 + Math.random()*12; el.style.width = size + 'px'; el.style.height = size + 'px';
+      el.style.left = Math.random()*100 + 'vw'; el.style.top = (100 + Math.random()*30) + 'vh';
+      el.style.background = ['rgba(96,165,250,0.12)','rgba(74,222,128,0.09)','rgba(250,204,21,0.07)'][Math.floor(Math.random()*3)];
+      el.style.animation = `floaty ${12 + Math.random()*18}s linear forwards`; document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 28000);
+    }
+    make(); setInterval(make, 2500);
+    const s = document.createElement('style'); s.innerHTML = `@keyframes floaty{ from{ transform: translateY(0) scale(1); } to{ transform: translateY(-110vh) scale(.4); opacity:0; } }`; document.head.appendChild(s);
+  })();
+
+  /* ---------- helpers: animate numbers ---------- */
+  function animateNumber(el, to, ms=600){
+    const from = parseInt(el.dataset.current || (el.innerText.replace(/,/g,'') || 0));
+    el.dataset.current = to;
+    const start = performance.now();
+    function step(now){
+      const t = Math.min(1, (now - start) / ms);
+      const val = Math.round(from + (to - from) * easeOutCubic(t));
+      el.innerText = val.toLocaleString('en-IN');
+      if(t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    function easeOutCubic(x){ return 1 - Math.pow(1-x,3); }
+  }
+
+  /* ---------- render helpers ---------- */
+  function renderAll(){ renderStats(); renderHistory(); renderBadges(); renderNextList(); renderStore(); renderLeaderboard(); }
+  renderAll();
+
+  // expose a few helpers for debugging (optional)
+  window.paisaRewards = { state, saveState, launchConfetti, showRewardPopup, renderAll };
+
+  </script>
+</body>
+</html>
+
