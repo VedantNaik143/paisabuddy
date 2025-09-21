@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 transition-all duration-300">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">Transaction History</h1>
+                <p class="text-gray-500 mt-1">Review your recent activity and payments.</p>
+            </div>
+            <div class="flex space-x-2">
+                <button id="filter-all" class="px-4 py-2 text-sm font-semibold rounded-full border border-gray-300 text-gray-700 bg-gray-200 transition-colors duration-200 hover:bg-gray-300">All</button>
+                <button id="filter-income" class="px-4 py-2 text-sm font-semibold rounded-full border border-green-500 text-green-700 bg-green-100 transition-colors duration-200 hover:bg-green-200">Income</button>
+                <button id="filter-expense" class="px-4 py-2 text-sm font-semibold rounded-full border border-red-500 text-red-700 bg-red-100 transition-colors duration-200 hover:bg-red-200">Expense</button>
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div id="transactions-container" class="space-y-4">
+            <!-- Transactions will be rendered here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Sample hardcoded transaction data
+        const transactions = [
+            { id: 1, type: 'income', description: 'Freelance Project Payment', date: '2023-10-20', amount: 500.00 },
+            { id: 2, type: 'expense', description: 'Groceries', date: '2023-10-18', amount: 85.50 },
+            { id: 3, type: 'expense', description: 'Electricity Bill', date: '2023-10-15', amount: 120.00 },
+            { id: 4, type: 'income', description: 'Monthly Salary', date: '2023-10-10', amount: 2500.00 },
+            { id: 5, type: 'expense', description: 'Online Subscription', date: '2023-10-05', amount: 12.99 },
+            { id: 6, type: 'expense', description: 'Coffee Shop', date: '2023-10-03', amount: 5.25 },
+            { id: 7, type: 'income', description: 'Bonus', date: '2023-10-01', amount: 150.00 },
+            { id: 8, type: 'expense', description: 'Restaurant Dinner', date: '2023-09-29', amount: 65.75 },
+            { id: 9, type: 'income', description: 'Side Hustle', date: '2023-09-25', amount: 300.00 },
+        ];
+
+        // Get the transaction container element
+        const transactionsContainer = document.getElementById('transactions-container');
+        const filterButtons = document.querySelectorAll('button[id^="filter-"]');
+
+        // Function to render transactions
+        function renderTransactions(filteredTransactions) {
+            transactionsContainer.innerHTML = ''; // Clear previous content
+
+            if (filteredTransactions.length === 0) {
+                transactionsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No transactions found for this filter.</p>';
+                return;
+            }
+
+            filteredTransactions.forEach(transaction => {
+                const isIncome = transaction.type === 'income';
+                const sign = isIncome ? '+' : '-';
+                const amountColor = isIncome ? 'text-green-600' : 'text-red-600';
+                const amountBg = isIncome ? 'bg-green-50' : 'bg-red-50';
+                const iconBg = isIncome ? 'bg-green-100' : 'bg-red-100';
+                const icon = isIncome ? 'M4.5 12.75l6 6 9-13.5' : 'M6 18L18 6M6 6l12 12'; // Simple SVG icons
+
+                const transactionHtml = `
+                    <div class="flex items-center justify-between p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md">
+                        <div class="flex items-center space-x-4">
+                            <!-- Icon -->
+                            <div class="w-10 h-10 flex items-center justify-center rounded-full ${iconBg} shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 ${amountColor}">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="${icon}" />
+                                </svg>
+                            </div>
+                            <!-- Description & Date -->
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-800">${transaction.description}</h3>
+                                <p class="text-sm text-gray-500 mt-1">${new Date(transaction.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                            </div>
+                        </div>
+                        <!-- Amount -->
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-lg ${amountColor} ${amountBg} px-4 py-2 rounded-xl text-center min-w-[100px]">${sign}$${transaction.amount.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+                transactionsContainer.innerHTML += transactionHtml;
+            });
+        }
+
+        // Handle filter button clicks
+        function handleFilter(event) {
+            const filterType = event.target.id.replace('filter-', '');
+            
+            filterButtons.forEach(btn => {
+                btn.classList.remove('bg-gray-200');
+                btn.classList.add('bg-white');
+            });
+            event.target.classList.remove('bg-white');
+            event.target.classList.add('bg-gray-200');
+
+            let filteredTransactions = [];
+            if (filterType === 'all') {
+                filteredTransactions = transactions;
+            } else {
+                filteredTransactions = transactions.filter(t => t.type === filterType);
+            }
+            renderTransactions(filteredTransactions);
+        }
+
+        // Add event listeners to filter buttons
+        filterButtons.forEach(button => {
+            button.addEventListener('click', handleFilter);
+        });
+
+        // Initial render of all transactions
+        document.getElementById('filter-all').click();
+    </script>
+</body>
+</html>
