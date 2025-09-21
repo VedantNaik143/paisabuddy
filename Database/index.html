@@ -3,26 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paisabuddy</title>
+  <title>Paisabuddy - Financial Literacy</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <h1>Welcome to Paisabuddy 🎧</h1>
-  <p>Select a language to hear financial explainers:</p>
+  <h1>💰 Paisabuddy</h1>
+  <p>Bridge the financial literacy gap for young Indians!</p>
 
-  <select id="language">
-    <option value="hindi.mp3">Hindi</option>
-    <option value="tamil.mp3">Tamil</option>
-    <option value="telugu.mp3">Telugu</option>
-  </select>
-  <button onclick="playAudio()">Play Explainer</button>
+  <!-- Chatbot -->
+  <h2>💬 Chatbot</h2>
+  <div id="chatbox">
+    <div id="messages"></div>
+    <input type="text" id="userInput" placeholder="Ask about finance..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
 
+  <hr>
+
+  <!-- Voice Learning Mode -->
+  <h2>🎧 Voice Learning Mode</h2>
+  <button onclick="playAudio('hindi')">Play in Hindi</button>
+  <button onclick="playAudio('english')">Play in English</button>
+  <button onclick="playAudio('tamil')">Play in Tamil</button>
   <audio id="audioPlayer" controls></audio>
 
   <hr>
-  <h2>Download Lessons</h2>
-  <a href="lessons/budgeting.pdf" download>Download Budgeting Lesson (PDF)</a><br>
-  <a href="audios/hindi.mp3" download>Download Hindi Audio</a>
+
+  <!-- Offline Mode (Download Lessons) -->
+  <h2>📥 Offline Lessons</h2>
+  <a href="lessons/budgeting.pdf" download>Download Budgeting Lesson</a><br>
+  <a href="lessons/investing.pdf" download>Download Investing Lesson</a>
+
+  <hr>
+
+  <!-- Gamified Quiz Section -->
+  <h2>📝 Financial Quiz</h2>
+  <div id="quiz">
+    <p id="question">Press Start to begin!</p>
+    <div id="options"></div>
+    <button onclick="startQuiz()">Start Quiz</button>
+    <p id="score">Score: 0</p>
+  </div>
 
   <script src="script.js"></script>
 </body>
