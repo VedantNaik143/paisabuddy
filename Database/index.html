@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paisabuddy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Welcome to Paisabuddy 🎧</h1>
+  <p>Select a language to hear financial explainers:</p>
+
+  <select id="language">
+    <option value="hindi.mp3">Hindi</option>
+    <option value="tamil.mp3">Tamil</option>
+    <option value="telugu.mp3">Telugu</option>
+  </select>
+  <button onclick="playAudio()">Play Explainer</button>
+
+  <audio id="audioPlayer" controls></audio>
+
+  <hr>
+  <h2>Download Lessons</h2>
+  <a href="lessons/budgeting.pdf" download>Download Budgeting Lesson (PDF)</a><br>
+  <a href="audios/hindi.mp3" download>Download Hindi Audio</a>
+
+  <script src="script.js"></script>
+</body>
+</html>
