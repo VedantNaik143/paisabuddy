@@ -170,29 +170,64 @@
   </div>
 
   <!-- Help & Support Modal -->
-  <div id="supportModal" class="modal" aria-hidden="true">
-    <div class="modal-back" onclick="closeSupportModal()"></div>
+  <div id="helpModal" class="modal" aria-hidden="true">
+    <div class="modal-back" onclick="closeHelpModal()"></div>
     <div class="modal-card">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold">Help & Support</h3>
-        <button onclick="closeSupportModal()" class="px-3 py-1 rounded bg-white/5">Close</button>
+        <button onclick="closeHelpModal()" class="px-3 py-1 rounded bg-white/5">Close</button>
       </div>
       <div class="space-y-4">
-        <div class="p-4 neon-card">
-          <h4 class="font-bold mb-2">FAQs</h4>
-          <ul class="list-disc list-inside space-y-2 text-sm muted">
-            <li><strong>How do I earn coins?</strong><br>You can earn coins by claiming your daily bonus, completing trades, and unlocking badges.</li>
-            <li><strong>What are XP points for?</strong><br>XP points (Experience Points) help you level up. The more you level up, the bigger your rewards.</li>
-            <li><strong>My coins aren't updating!</strong><br>Try refreshing the page or checking your internet connection. If the problem persists, contact support.</li>
+        <div>
+          <h4 class="font-semibold mb-2">Common Questions</h4>
+          <ul class="list-disc list-inside text-sm muted space-y-1">
+            <li><span class="font-medium">Why aren't my coins updating?</span> Rewards and coins are updated in real-time. Please check your internet connection.</li>
+            <li><span class="font-medium">How can I earn more XP?</span> You earn XP by completing in-app lessons and trading tasks.</li>
+            <li><span class="font-medium">I found a bug, how do I report it?</span> Please contact our support team using the form below.</li>
           </ul>
         </div>
-        <div class="p-4 neon-card">
-          <h4 class="font-bold mb-2">Contact Us</h4>
-          <p class="text-sm muted">If you have further questions, you can reach out to our support team.</p>
-          <div class="flex items-center gap-2 mt-3 text-sm">
-            <span class="muted">Email:</span>
-            <a href="mailto:support@paisabuddy.in" class="primary-btn">support@paisabuddy.in</a>
+        <div>
+          <h4 class="font-semibold mb-2">Contact Us</h4>
+          <p class="text-sm muted">
+            If you need further assistance, please fill out this form and we'll get back to you as soon as possible.
+          </p>
+          <div class="mt-2 space-y-2">
+            <input type="text" placeholder="Your Name" class="w-full p-2 rounded bg-white/5 border border-white/10 text-sm" />
+            <input type="email" placeholder="Your Email" class="w-full p-2 rounded bg-white/5 border border-white/10 text-sm" />
+            <textarea placeholder="Your Message" rows="4" class="w-full p-2 rounded bg-white/5 border border-white/10 text-sm"></textarea>
+            <button class="primary-btn w-full">Submit</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Us Modal -->
+  <div id="aboutModal" class="modal" aria-hidden="true">
+    <div class="modal-back" onclick="closeAboutModal()"></div>
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">About Paisabuddy</h3>
+        <button onclick="closeAboutModal()" class="px-3 py-1 rounded bg-white/5">Close</button>
+      </div>
+      <div class="space-y-4 text-sm muted">
+        <div>
+          <h4 class="font-semibold mb-1 text-white">About Us</h4>
+          <p>
+            Paisabuddy is your personal finance companion, designed to make learning about money management, trading, and investments fun and rewarding. Our mission is to empower you to take control of your financial future.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-1 text-white">Privacy Policy</h4>
+          <p>
+            Your privacy is important to us. We are committed to protecting your personal information and being transparent about our data practices. Our privacy policy outlines how we collect, use, and protect your data.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-1 text-white">Terms of Service</h4>
+          <p>
+            By using Paisabuddy, you agree to our terms of service. These terms govern your use of the app and outline the rules and responsibilities for both you and us.
+          </p>
         </div>
       </div>
     </div>
@@ -203,14 +238,15 @@
     <div class="flex items-center gap-4">
       <a href="../dashboard.html" class="back-btn">⬅ Dashboard</a>
       <h1 class="text-xl font-bold">🏆 Rewards Hub</h1>
-      <span class="ml-3 text-sm muted hidden sm:block">Collect coins, unlock badges & level up</span>
+      <span class="ml-3 text-sm muted">Collect coins, unlock badges & level up</span>
     </div>
 
     <div class="flex items-center gap-3">
       <button id="claimBtn" class="primary-btn">Claim Daily</button>
       <button id="openStoreBtn" class="px-3 py-2 rounded-lg" style="background:linear-gradient(90deg,#22c55e,#06b6d4); color:#041024; font-weight:700; box-shadow:0 8px 30px rgba(34,197,94,0.08)">🛒 Store</button>
       <button id="openLeaderboardBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">🏅 Leaderboard</button>
-      <button id="openSupportBtnTop" class="px-3 py-2 rounded-lg bg-white/5 text-sm">Help</button>
+      <button id="openHelpBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">Help</button>
+      <button id="openAboutBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">About</button>
     </div>
   </nav>
 
@@ -278,7 +314,6 @@
         <div class="mt-3 flex gap-2">
           <button id="openStore" class="w-full px-3 py-2 rounded-md bg-gradient-to-r from-indigo-600 to-violet-600 text-white small">Redeem Store</button>
           <button id="openLeaderboard" class="w-full px-3 py-2 rounded-md bg-white/5 small">Leaderboard</button>
-          <button id="openSupport" class="w-full px-3 py-2 rounded-md bg-white/5 small">Help</button>
         </div>
       </div>
 
@@ -321,11 +356,11 @@
   const STORAGE_KEY = 'paisa_rewards_state_v1';
 
   const BADGES = [
-    { id:'novice',    name:'Novice Trader',   desc:'First trade completed', rarity:'common', cost:0, reward:20 },
-    { id:'saver',     name:'Saver',           desc:'Saved ₹1000 in portfolio', rarity:'rare', cost:120, reward:120 },
+    { id:'novice',    name:'Novice Trader',     desc:'First trade completed', rarity:'common', cost:0, reward:20 },
+    { id:'saver',     name:'Saver',             desc:'Saved ₹1000 in portfolio', rarity:'rare', cost:120, reward:120 },
     { id:'investor', name:'Investor',          desc:'Complete 5 trades', rarity:'rare', cost:200, reward:200 },
     { id:'streak7',   name:'7-Day Streak',    desc:'Log in 7 days consecutively', rarity:'legend', cost:0, reward:500, requiresStreak:7 },
-    { id:'legend',    name:'Market Legend',   desc:'100 trades completed', rarity:'legend', cost:1000, reward:2000 }
+    { id:'legend',    name:'Market Legend',     desc:'100 trades completed', rarity:'legend', cost:1000, reward:2000 }
   ];
 
   const STORE_ITEMS = [
@@ -622,12 +657,19 @@
     });
   }
 
-  /* ---------- help/support modal ---------- */
-  const supportModal = document.getElementById('supportModal');
-  function openSupportModal(){ supportModal.style.display = 'flex'; }
-  function closeSupportModal(){ supportModal.style.display = 'none'; }
-  document.getElementById('openSupportBtnTop').addEventListener('click', openSupportModal);
-  document.getElementById('openSupport').addEventListener('click', openSupportModal);
+  /* ---------- help modal ---------- */
+  const helpModal = document.getElementById('helpModal');
+  const openHelpBtn = document.getElementById('openHelpBtn');
+  function openHelpModal(){ helpModal.style.display = 'flex'; }
+  function closeHelpModal(){ helpModal.style.display = 'none'; }
+  openHelpBtn.addEventListener('click', openHelpModal);
+
+  /* ---------- about modal ---------- */
+  const aboutModal = document.getElementById('aboutModal');
+  const openAboutBtn = document.getElementById('openAboutBtn');
+  function openAboutModal(){ aboutModal.style.display = 'flex'; }
+  function closeAboutModal(){ aboutModal.style.display = 'none'; }
+  openAboutBtn.addEventListener('click', openAboutModal);
 
   /* ---------- spawn ambient particles ---------- */
   (function spawnParticles(){
