@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PaisaBuddy — Virtual Portfolio</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+  <style>
+    /* Theme + glow */
+    body {
+      background: linear-gradient(135deg, #0b1220 0%, #13182b 45%, #211635 100%);
+      color: #e6eef8;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .neon-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(74,222,128,0.08);
+      box-shadow: 0 6px 30px rgba(2,6,23,0.6);
+      border-radius: 14px;
+    }
+    .glow-btn {
+      background: linear-gradient(90deg,#22c55e,#7c3aed 120%);
+      color: black;
+      font-weight: 600;
+    }
+    .metric-value { font-weight: 700; font-size:1.25rem; }
+    .spark-canvas { width: 100px; height: 28px; }
+    /* table */
+    .table-row:hover { background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); }
+    /* modal backdrop */
+    .backdrop {
+      background: rgba(3,7,18,0.7);
+      backdrop-filter: blur(6px);
+    }
+
+    /* ========== Select styling: visible control is white, pop-up options are dark ========== */
+    select {
+      background-color: rgba(255,255,255,1);
+      color: #071024;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 0.45rem 0.6rem;
+      min-width: 72px;
+    }
+    /* Style dropdown options (makes the popup dark) */
+    select option {
+      background-color: #0b1220; /* dark popup */
+      color: #e6eef8;
+    }
+
+    /* ========== Modal inputs: dark theme, but readable (light text on dark bg) ========== */
+    #tradeModal input[type="number"],
+    #tradeModal input[readonly],
+    #tradeModal input[type="text"],
+    #tradeModal .text-input {
+      background: rgba(255,255,255,0.03);
+      color: #e6eef8;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 0.5rem;
+    }
+    #tradeModal input[readonly] {
+      cursor: not-allowed;
+    }
+
+    /* ===== New: Trade-selector block (distinct darker background, readable selects) ===== */
+    #tradeModal .selector-block {
+      background: linear-gradient(180deg, rgba(6,10,18,0.92), rgba(12,16,26,0.95));
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 0.625rem;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
+    }
+    /* override selects inside the trade modal so they are dark with light text */
+    #tradeModal .selector-block select {
+      background-color: rgba(255,255,255,0.03) !important;
+      color: #e6eef8 !important;
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.6rem;
+      min-width: 0;
+    }
+    #tradeModal .selector-block label {
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* ========== Marquee for long holdings names (only when overflow) ========== */
+    .asset-name-container {
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: 180px; /* wider so fewer names overflow */
+      display: block;
+      position: relative;
+      line-height: 1;
+    }
+    .asset-name-text {
+      display: inline-block;
+      padding-right: 12px;
+      color: #ffffff; /* now the name is white */
+      font-weight: 600;
+      transform: translateX(0);
+      white-space: nowrap;
+    }
+    .ticker {
+      color: #ffffff;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    /* marquee left-to-right (enter from left, move to right) */
+    .asset-name-container.marquee .asset-name-text {
+      animation-name: scroll-text;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      animation-duration: var(--marquee-duration, 8s);
+      transform: translateX(-100%); /* start off-left */
+    }
+    .asset-name-container:hover .asset-name-text {
+      animation-play-state: paused;
+    }
+    @keyframes scroll-text {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* small responsive tweak for modal content */
+    @media (max-width: 640px) {
+      #tradeModal .neon-card { margin: 1rem; }
+      .asset-name-container { max-width: 140px; }
+      .spark-canvas { width: 80px; height: 24px; }
+    }
+
+    /* ensure table cells allow min width shrinking in flex */
+    .td-left .min-w-0 { min-width: 0; }
+  </style>
+</head>
+<body class="min-h-screen antialiased">
+
+  <!-- Header -->
+  <nav class="flex items-center justify-between px-6 py-4 neon-card mx-6 mt-6">
+    <div class="flex items-center gap-4">
+      <button onclick="location.href='../dashboard.html'" class="px-3 py-2 rounded-md text-sm bg-white/5 hover:bg-white/8">← Back</button>
+      <h1 class="text-xl font-bold">📊 Virtual Portfolio</h1>
+      <span class="ml-3 text-sm text-gray-300">Simulated trading — risk-free learning</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="exportCsv" class="px-3 py-2 rounded-md text-sm hover:opacity-90 bg-white/5">Export CSV</button>
+      <button id="openTrade" class="px-3 py-2 rounded-md glow-btn">Trade Simulator</button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Left / Chart + controls -->
+    <section class="lg:col-span-2 neon-card p-6">
+      <!-- Summary row -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold">Portfolio Overview</h2>
+          <p class="text-sm text-gray-300">Snapshot of your simulated investments and performance.</p>
+        </div>
+
+        <div class="flex gap-3 items-center">
+          <div class="text-sm text-gray-300">Timeframe:</div>
+          <div id="timeframeBtns" class="flex gap-2">
+            <button class="px-3 py-1 rounded-md timeframe-btn text-sm bg-white/5">1W</button>
+            <button class="px-3 py-1 rounded-md timeframe-btn text-sm bg-white/5">1M</button>
+            <button class="px-3 py-1 rounded-md timeframe-btn text-sm bg-white/5">3M</button>
+            <button class="px-3 py-1 rounded-md timeframe-btn text-sm bg-white/5">1Y</button>
+            <button class="px-3 py-1 rounded-md timeframe-btn text-sm bg-white/5">All</button>
+          </div>
+
+          <div class="ml-4 text-sm text-gray-300">Chart:</div>
+          <select id="chartType" class="bg-white/5 text-sm rounded-md px-2 py-1">
+            <option>Line</option>
+            <option>Area</option>
+            <option>Bar</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Big chart -->
+      <div class="mt-4 border-t border-white/6 pt-5">
+        <canvas id="mainChart" height="140"></canvas>
+      </div>
+
+      <!-- portfolio metrics -->
+      <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 neon-card">
+          <div class="text-sm text-gray-300">Total Value</div>
+          <div class="metric-value" id="totalValue">₹0</div>
+        </div>
+        <div class="p-4 neon-card">
+          <div class="text-sm text-gray-300">Invested</div>
+          <div class="metric-value" id="totalInvested">₹0</div>
+        </div>
+        <div class="p-4 neon-card">
+          <div class="text-sm text-gray-300">Unrealized P/L</div>
+          <div class="metric-value" id="totalPL">₹0</div>
+        </div>
+        <div class="p-4 neon-card">
+          <div class="text-sm text-gray-300">Cash (Sim)</div>
+          <div class="metric-value" id="cashBalance">₹0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right / Holdings + Transactions -->
+    <aside class="neon-card p-4">
+      <h3 class="text-lg font-semibold mb-3">Holdings</h3>
+
+      <div class="overflow-auto max-h-[390px] pr-2">
+        <table class="w-full text-sm">
+          <thead class="text-gray-300 text-xs">
+            <tr>
+              <th class="text-left py-2">Asset</th>
+              <th class="text-right py-2">Qty</th>
+              <th class="text-right py-2 pr-6">Value</th>
+              <th class="text-right py-2">P/L</th>
+              <th class="text-center py-2">Spark</th>
+              <th class="text-center py-2">Action</th>
+            </tr>
+          </thead>
+          <tbody id="holdingsTbody" class="text-gray-200">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="my-4 border-white/6">
+
+      <h4 class="text-md font-semibold mb-2">Recent Transactions</h4>
+      <div class="space-y-2 max-h-[220px] overflow-auto">
+        <ul id="txList" class="text-sm text-gray-200">
+          <!-- tx loaded here -->
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Trade Modal -->
+  <div id="tradeModal" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="backdrop absolute inset-0"></div>
+    <div class="relative z-10 w-full max-w-xl neon-card p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Trade Simulator</h3>
+        <button id="closeTrade" class="text-gray-300">✖</button>
+      </div>
+
+      <form id="tradeForm" class="space-y-4">
+        <!-- <<< UPDATED: selector block wrapped and styled so selects are dark + readable >>> -->
+        <div class="selector-block">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm text-gray-300">Asset</label>
+              <select id="tradeAsset" class="text-sm rounded-md p-2"></select>
+            </div>
+            <div>
+              <label class="text-sm text-gray-300">Type</label>
+              <select id="tradeType" class="text-sm rounded-md p-2">
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="text-sm text-gray-300">Quantity</label>
+            <input id="tradeQty" type="number" min="1" step="1" value="1" class="w-full rounded-md p-2 text-input" />
+          </div>
+          <div>
+            <label class="text-sm text-gray-300">Price (₹)</label>
+            <input id="tradePrice" type="number" step="0.01" class="w-full rounded-md p-2 text-input" />
+          </div>
+          <div>
+            <label class="text-sm text-gray-300">Total (₹)</label>
+            <input id="tradeTotal" type="text" readonly class="w-full rounded-md p-2 text-input" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button type="button" id="tradeCancel" class="px-4 py-2 rounded-md bg-white/5">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-md glow-btn">Execute</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  /***************************************
+   * Simulated Portfolio — client-side only
+   * - localStorage persistence
+   * - synthetic price generator + timeframe slicing
+   * - trade simulation (buy/sell)
+   * - mini sparklines for holdings
+   * - marquee only when name overflows
+   ***************************************/
+
+  // --- Utilities ---
+  function fmt(n) {
+    if (typeof n !== 'number' || isNaN(n)) n = 0;
+    return '₹' + (n>=0? n.toLocaleString('en-IN', {maximumFractionDigits:2}) : '-' + Math.abs(n).toLocaleString('en-IN', {maximumFractionDigits:2}));
+  }
+
+  function nowISO(offsetDays = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().slice(0,10);
+  }
+
+  // Random walk price generator (base + noise)
+  function generateSeries(base, days = 120) {
+    const out = [];
+    let price = base;
+    for (let i = days-1; i >= 0; i--) {
+      // backdate: older first
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      // small random drift
+      const drift = (Math.random() - 0.47) * (base * 0.012);
+      price = Math.max(1, price + drift);
+      out.push({ date: date.toISOString().slice(0,10), value: Number(price.toFixed(2)) });
+    }
+    return out;
+  }
+
+  // --- Initial assets (sample list) ---
+  const ASSETS_INFO = {
+    TCS: { name: 'TCS', base: 3300 },
+    INFY: { name: 'Infosys', base: 1400 },
+    HDFCBANK: { name: 'HDFC Bank', base: 1650 },
+    RELIANCE: { name: 'Reliance', base: 2500 },
+    ICICI: { name: 'ICICI Bank', base: 1000 },
+
+    // Additional assets added per request:
+    SBI: { name: 'State Bank of India', base: 640 },
+    AXISBANK: { name: 'Axis Bank', base: 850 },
+    KOTAKBANK: { name: 'Kotak Mahindra Bank', base: 1900 },
+    LT: { name: 'Larsen & Toubro', base: 2700 },
+    HUL: { name: 'Hindustan Unilever', base: 2600 },
+    TATASTEEL: { name: 'Tata Steel', base: 120 },
+    ITC: { name: 'ITC', base: 420 }
+  };
+
+  // Load or initialize portfolio state from localStorage
+  const STORAGE_KEY = 'paisa_portfolio_v1';
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+
+  if (!state) {
+    // initial demo state
+    state = {
+      cash: 20000,
+      holdings: {
+        TCS: { qty: 10, avg: 3200 },
+        INFY: { qty: 5, avg: 1500 },
+        HDFCBANK: { qty: 8, avg: 1600 }
+      },
+      transactions: [
+        { type:'buy', asset:'TCS', qty:10, price:3200, total:32000, date: nowISO(-40) },
+        { type:'buy', asset:'INFY', qty:5, price:1500, total:7500, date: nowISO(-30) },
+        { type:'buy', asset:'HDFCBANK', qty:8, price:1600, total:12800, date: nowISO(-20) }
+      ],
+      seriesCache: {} // store generated series per asset
+    };
+    // reduce initial cash to reflect demo buy totals
+    state.cash = 50000 - (32000 + 7500 + 12800); // Simulate initial deposit and buys
+    // ensure non-negative
+    if(state.cash < 0) state.cash = 10000;
+    saveState();
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // generate (or fetch) series for each asset and for "PORTFOLIO" aggregate
+  function getSeriesFor(asset, days=120) {
+    // fallback if asset isn't in ASSETS_INFO (shouldn't happen)
+    if (!ASSETS_INFO[asset]) {
+      ASSETS_INFO[asset] = { name: asset, base: 100 };
+    }
+    if (!state.seriesCache[asset] || state.seriesCache[asset].days !== days) {
+      const info = ASSETS_INFO[asset];
+      const series = generateSeries(info.base, days);
+      state.seriesCache[asset] = { days, series };
+      saveState();
+    }
+    return state.seriesCache[asset].series;
+  }
+
+  // build aggregate portfolio value series
+  function aggregatePortfolioSeries(days=120) {
+    const firstAsset = Object.keys(ASSETS_INFO)[0];
+    const labels = getSeriesFor(firstAsset, days).map(s => s.date);
+    const values = labels.map((d, idx) => {
+      let total = 0;
+      for (const a of Object.keys(state.holdings)) {
+        const series = getSeriesFor(a, days);
+        const price = series[idx] ? series[idx].value : series[series.length-1].value;
+        total += price * (state.holdings[a].qty || 0);
+      }
+      return Number(total.toFixed(2));
+    });
+    return { labels, values };
+  }
+
+  // --- Chart (main) ---
+  const mainCtx = document.getElementById('mainChart').getContext('2d');
+  let mainChart;
+
+  function createMainChart(labels, values, type='line') {
+    if (mainChart) mainChart.destroy();
+    const dataset = {
+      label: 'Portfolio Value (Sim)',
+      data: values,
+      borderColor: '#4ade80',
+      backgroundColor: (type === 'area') ? 'rgba(74,222,128,0.12)' : 'rgba(74,222,128,0.06)',
+      fill: type === 'area',
+      tension: 0.2,
+      pointRadius: 0
+    };
+    const config = {
+      type: (type === 'bar') ? 'bar' : 'line',
+      data: { labels, datasets: [dataset] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: { color: '#cbd5e1' },
+            grid: { color: 'rgba(255,255,255,0.03)' }
+          },
+          y: {
+            ticks: { color: '#cbd5e1' },
+            grid: { color: 'rgba(255,255,255,0.03)' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => fmt(ctx.parsed.y || ctx.parsed)
+            }
+          }
+        }
+      }
+    };
+    mainChart = new Chart(mainCtx, config);
+  }
+
+  // initialize with default timeframe
+  let currentTimeframe = '1M';
+  function timeframeToDays(tf) {
+    switch(tf) {
+      case '1W': return 7;
+      case '1M': return 30;
+      case '3M': return 90;
+      case '1Y': return 365;
+      default: return 365;
+    }
+  }
+
+  // --- Holdings table rendering + mini-sparklines ---
+  const holdingsTbody = document.getElementById('holdingsTbody');
+
+  // marquee helper (only enable if text overflows)
+  function setupMarquee(container) {
+    if (!container) return;
+    const textEl = container.querySelector('.asset-name-text');
+    if (!textEl) return;
+    // clear previous
+    textEl.style.animationDuration = '';
+    container.classList.remove('marquee');
+
+    // measure in next frame (ensures rendering)
+    requestAnimationFrame(() => {
+      // if text wider than container -> enable marquee
+      if (textEl.scrollWidth > container.clientWidth + 2) {
+        const overflowPx = textEl.scrollWidth - container.clientWidth;
+        // duration scales with overflow; tweak divisor for speed
+        const duration = Math.max(6, 6 + (overflowPx / 28));
+        textEl.style.setProperty('--marquee-duration', duration + 's');
+        // ensure it starts off-left for smooth entry
+        textEl.style.transform = 'translateX(-100%)';
+        // give browser a moment then enable animation class
+        requestAnimationFrame(() => container.classList.add('marquee'));
+      } else {
+        // ensure text is at normal position when not scrolling
+        textEl.style.transform = 'translateX(0)';
+      }
+    });
+  }
+
+  function renderHoldings() {
+    holdingsTbody.innerHTML = '';
+    const assetKeys = Object.keys(state.holdings);
+    for (const key of assetKeys) {
+      const h = state.holdings[key];
+      const series = getSeriesFor(key, timeframeToDays(currentTimeframe));
+      const currentPrice = series[series.length - 1].value;
+      const value = currentPrice * h.qty;
+      const invested = h.avg * h.qty;
+      const pl = value - invested;
+      const plPct = (invested === 0) ? 0 : (pl / invested) * 100;
+
+      const tr = document.createElement('tr');
+      tr.className = 'table-row border-t border-white/6';
+      tr.innerHTML = `
+        <td class="py-3 td-left min-w-0">
+          <div class="flex items-center gap-3">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold asset-name-container">
+                <div class="asset-name-text"><span class="ticker">${key}</span>${ASSETS_INFO[key].name}</div>
+              </div>
+              <div class="text-xs text-gray-300">₹${currentPrice.toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+        </td>
+        <td class="py-3 text-right">${h.qty}</td>
+        <td class="py-3 text-right pr-6">${fmt(value)}</td>
+        <td class="py-3 text-right ${pl>=0 ? 'text-green-400' : 'text-red-400'}">${pl>=0? '+' : ''}${fmt(Number(pl.toFixed(2)))} <span class="text-xs text-gray-400">(${plPct.toFixed(1)}%)</span></td>
+        <td class="py-3 text-center"><canvas class="spark-canvas" data-asset="${key}"></canvas></td>
+        <td class="py-3 text-center"><button data-asset="${key}" class="px-3 py-1 rounded-md bg-white/5 trade-inline">Trade</button></td>
+      `;
+      holdingsTbody.appendChild(tr);
+
+      // setup marquee for the newly added element
+      const container = tr.querySelector('.asset-name-container');
+      setupMarquee(container);
+    }
+
+    // attach inline trade buttons
+    document.querySelectorAll('.trade-inline').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const asset = e.currentTarget.dataset.asset;
+        openTradeModal(asset, 'buy');
+      });
+    });
+
+    // create sparklines
+    document.querySelectorAll('.spark-canvas').forEach(c => {
+      const a = c.dataset.asset;
+      const ctx = c.getContext('2d');
+      const s = getSeriesFor(a, timeframeToDays(currentTimeframe)).map(x => x.value);
+      // clear canvas size to avoid overlaying previous charts
+      ctx.canvas.width = ctx.canvas.offsetWidth;
+      ctx.canvas.height = ctx.canvas.offsetHeight;
+      // small sparkline
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels: new Array(s.length).fill(''), datasets: [{ data: s }] },
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          elements: { line: { borderColor: '#60a5fa', tension: 0.3 }, point: { radius: 0 } },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { display: false } }
+        }
+      });
+    });
+  }
+
+  // --- Portfolio summary calculation ---
+  function recalcSummary() {
+    let totalValue = 0;
+    let invested = 0;
+    for (const a of Object.keys(state.holdings)) {
+      const h = state.holdings[a];
+      const series = getSeriesFor(a, timeframeToDays('All') );
+      const price = series[series.length - 1].value;
+      totalValue += price * h.qty;
+      invested += h.avg * h.qty;
+    }
+    const totalPL = totalValue - invested;
+    document.getElementById('totalValue').innerText = fmt(Number(totalValue.toFixed(2)));
+    document.getElementById('totalInvested').innerText = fmt(Number(invested.toFixed(2)));
+    document.getElementById('totalPL').innerText = (totalPL >= 0 ? '+' : '') + fmt(Number(totalPL.toFixed(2)));
+    document.getElementById('cashBalance').innerText = fmt(Number(state.cash.toFixed(2)));
+  }
+
+  // --- Transactions rendering ---
+  function renderTxs() {
+    const ul = document.getElementById('txList');
+    ul.innerHTML = '';
+    const txs = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+    for (const tx of txs.slice(0,40)) {
+      const li = document.createElement('li');
+      li.className = 'flex justify-between items-center bg-white/2 p-2 rounded-md';
+      li.innerHTML = `
+        <div>
+          <div class="text-sm font-semibold">${tx.type.toUpperCase()} · ${tx.asset}</div>
+          <div class="text-xs text-gray-300">${tx.qty} @ ₹${Number(tx.price).toLocaleString('en-IN')} · ${tx.date}</div>
+        </div>
+        <div class="text-sm ${tx.type === 'buy' ? 'text-green-400' : 'text-red-400'}">${tx.type === 'buy' ? '+' : '-'}${fmt(tx.total)}</div>
+      `;
+      ul.appendChild(li);
+    }
+  }
+
+  // --- Timeframe / chart type handlers ---
+  document.querySelectorAll('.timeframe-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('bg-green-500','text-black'));
+      e.currentTarget.classList.add('bg-green-500','text-black');
+      currentTimeframe = e.currentTarget.innerText;
+      refreshMain();
+      renderHoldings();
+    });
+  });
+  // default highlight 1M
+  document.querySelectorAll('.timeframe-btn')[1].classList.add('bg-green-500','text-black');
+
+  document.getElementById('chartType').addEventListener('change', (e) => refreshMain());
+
+  // --- Trading modal logic ---
+  const tradeModal = document.getElementById('tradeModal');
+  const openTrade = document.getElementById('openTrade');
+  const closeTrade = document.getElementById('closeTrade');
+  const tradeForm = document.getElementById('tradeForm');
+  const tradeAsset = document.getElementById('tradeAsset');
+  const tradeType = document.getElementById('tradeType');
+  const tradeQty = document.getElementById('tradeQty');
+  const tradePrice = document.getElementById('tradePrice');
+  const tradeTotal = document.getElementById('tradeTotal');
+  const tradeCancel = document.getElementById('tradeCancel');
+
+  function populateTradeAssets() {
+    tradeAsset.innerHTML = '';
+    for (const k of Object.keys(ASSETS_INFO)) {
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.innerText = `${k} · ${ASSETS_INFO[k].name}`;
+      tradeAsset.appendChild(opt);
+    }
+  }
+  populateTradeAssets();
+
+  function openTradeModal(asset = null, type = 'buy') {
+    tradeModal.classList.remove('hidden');
+    tradeModal.classList.add('flex');
+    tradeType.value = type;
+    if (asset) tradeAsset.value = asset;
+    updateTradePrice();
+    // tiny UX: focus qty
+    setTimeout(()=>{ tradeQty.focus(); tradeQty.select(); }, 150);
+  }
+  function closeTradeModal() {
+    tradeModal.classList.add('hidden');
+    tradeModal.classList.remove('flex');
+  }
+
+  openTrade.addEventListener('click', () => openTradeModal());
+  closeTrade.addEventListener('click', () => closeTradeModal());
+  tradeCancel.addEventListener('click', (e) => { e.preventDefault(); closeTradeModal(); });
+
+  // compute trade price/total live (clean deterministic logic)
+  function updateTradePrice() {
+    const asset = tradeAsset.value;
+    const series = getSeriesFor(asset, 30);
+    const price = series[series.length - 1].value || 0;
+    tradePrice.value = price.toFixed(2);
+    const qty = Number(tradeQty.value) || 0;
+    const total = qty * price;
+    tradeTotal.value = fmt(total);
+  }
+  tradeAsset.addEventListener('change', updateTradePrice);
+  tradeQty.addEventListener('input', updateTradePrice);
+  tradePrice.addEventListener('input', () => {
+    const qty = Number(tradeQty.value) || 0;
+    const price = Number(tradePrice.value) || 0;
+    const total = qty * price;
+    tradeTotal.value = fmt(total);
+  });
+
+  // trade submit
+  tradeForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const asset = tradeAsset.value;
+    const type = tradeType.value;
+    const qty = Math.max(1, Math.floor(Number(tradeQty.value)));
+    const price = Number(tradePrice.value);
+    if (!asset || !qty || !price) { alert('Enter valid values'); return; }
+
+    const total = Number((qty * price).toFixed(2));
+    if (type === 'buy') {
+      if (state.cash < total) {
+        if (!confirm('You have insufficient cash. Proceed and allow cash to go negative for simulation?')) return;
+      }
+      // add/update holding
+      if (!state.holdings[asset]) {
+        state.holdings[asset] = { qty, avg: price };
+      } else {
+        const h = state.holdings[asset];
+        const newQty = h.qty + qty;
+        const newAvg = ((h.avg * h.qty) + (price * qty)) / newQty;
+        h.qty = newQty;
+        h.avg = Number(newAvg.toFixed(2));
+      }
+      state.cash = Number((state.cash - total).toFixed(2));
+      state.transactions.push({ type:'buy', asset, qty, price, total, date: new Date().toISOString().slice(0,10) });
+    } else {
+      // sell
+      const h = state.holdings[asset] || { qty:0, avg:0 };
+      if (h.qty < qty) {
+        if (!confirm('You are trying to sell more than held. Sell available quantity instead?')) {
+          return;
+        }
+      }
+      const sellQty = Math.min(h.qty, qty);
+      const proceedTotal = Number((sellQty * price).toFixed(2));
+      // reduce holding
+      h.qty = h.qty - sellQty;
+      if (h.qty <= 0) delete state.holdings[asset];
+      state.cash = Number((state.cash + proceedTotal).toFixed(2));
+      state.transactions.push({ type:'sell', asset, qty: sellQty, price, total: proceedTotal, date: new Date().toISOString().slice(0,10) });
+    }
+
+    saveState();
+    closeTradeModal();
+    refreshMain();
+    renderHoldings();
+    renderTxs();
+  });
+
+  // inline trade helper
+  function openTradeModalInline(asset, type='buy') {
+    openTradeModal(asset, type);
+  }
+
+  // --- Export CSV of transactions ---
+  document.getElementById('exportCsv').addEventListener('click', () => {
+    const rows = [['Type','Asset','Qty','Price','Total','Date']];
+    for (const tx of state.transactions) {
+      rows.push([tx.type, tx.asset, tx.qty, tx.price, tx.total, tx.date]);
+    }
+    const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'paisa_transactions.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // attach inline trade from holdings table (delegated)
+  document.addEventListener('click', (e) => {
+    if (e.target.classList && e.target.classList.contains('trade-inline')) {
+      const asset = e.target.dataset.asset;
+      openTradeModal(asset, 'buy');
+    }
+  });
+
+  // --- Refresh main view (chart + summary) ---
+  function refreshMain() {
+    const days = timeframeToDays(currentTimeframe);
+    const agg = aggregatePortfolioSeries(days);
+    const chartType = document.getElementById('chartType').value.toLowerCase();
+    createMainChart(agg.labels, agg.values, chartType);
+    recalcSummary();
+  }
+
+  // initial render
+  refreshMain();
+  renderHoldings();
+  renderTxs();
+
+  // recalc marquees on resize (so sliding toggles correctly)
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.asset-name-container').forEach(container => setupMarquee(container));
+  });
+
+  // dev: allow clearing state by pressing SHIFT + C (keeps user in control)
+  document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.key.toLowerCase() === 'c') {
+      if (confirm('Reset portfolio demo state?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+  });
+  </script>
+
+</body>
+</html>
