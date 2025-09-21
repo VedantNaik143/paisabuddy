@@ -1,22 +1,21 @@
-self.addEventListener("install", (event) => {
+self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open("paisabuddy-cache").then((cache) => {
+    caches.open("paisabuddy-cache").then(cache => {
       return cache.addAll([
         "/",
         "/index.html",
         "/style.css",
         "/script.js",
-        "/audios/hindi.mp3",
-        "/audios/tamil.mp3",
-        "/audios/telugu.mp3"
+        "/lessons/budgeting.pdf",
+        "/lessons/investing.pdf"
       ]);
     })
   );
 });
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(event.request).then(response => {
       return response || fetch(event.request);
     })
   );
