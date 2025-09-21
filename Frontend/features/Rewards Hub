@@ -169,18 +169,48 @@
     </div>
   </div>
 
+  <!-- Help & Support Modal -->
+  <div id="supportModal" class="modal" aria-hidden="true">
+    <div class="modal-back" onclick="closeSupportModal()"></div>
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Help & Support</h3>
+        <button onclick="closeSupportModal()" class="px-3 py-1 rounded bg-white/5">Close</button>
+      </div>
+      <div class="space-y-4">
+        <div class="p-4 neon-card">
+          <h4 class="font-bold mb-2">FAQs</h4>
+          <ul class="list-disc list-inside space-y-2 text-sm muted">
+            <li><strong>How do I earn coins?</strong><br>You can earn coins by claiming your daily bonus, completing trades, and unlocking badges.</li>
+            <li><strong>What are XP points for?</strong><br>XP points (Experience Points) help you level up. The more you level up, the bigger your rewards.</li>
+            <li><strong>My coins aren't updating!</strong><br>Try refreshing the page or checking your internet connection. If the problem persists, contact support.</li>
+          </ul>
+        </div>
+        <div class="p-4 neon-card">
+          <h4 class="font-bold mb-2">Contact Us</h4>
+          <p class="text-sm muted">If you have further questions, you can reach out to our support team.</p>
+          <div class="flex items-center gap-2 mt-3 text-sm">
+            <span class="muted">Email:</span>
+            <a href="mailto:support@paisabuddy.in" class="primary-btn">support@paisabuddy.in</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <nav class="neon-card mx-6 mt-6 p-4 flex items-center justify-between z-10 relative">
     <div class="flex items-center gap-4">
       <a href="../dashboard.html" class="back-btn">⬅ Dashboard</a>
       <h1 class="text-xl font-bold">🏆 Rewards Hub</h1>
-      <span class="ml-3 text-sm muted">Collect coins, unlock badges & level up</span>
+      <span class="ml-3 text-sm muted hidden sm:block">Collect coins, unlock badges & level up</span>
     </div>
 
     <div class="flex items-center gap-3">
       <button id="claimBtn" class="primary-btn">Claim Daily</button>
       <button id="openStoreBtn" class="px-3 py-2 rounded-lg" style="background:linear-gradient(90deg,#22c55e,#06b6d4); color:#041024; font-weight:700; box-shadow:0 8px 30px rgba(34,197,94,0.08)">🛒 Store</button>
       <button id="openLeaderboardBtn" class="px-3 py-2 rounded-lg bg-white/5 text-sm">🏅 Leaderboard</button>
+      <button id="openSupportBtnTop" class="px-3 py-2 rounded-lg bg-white/5 text-sm">Help</button>
     </div>
   </nav>
 
@@ -248,6 +278,7 @@
         <div class="mt-3 flex gap-2">
           <button id="openStore" class="w-full px-3 py-2 rounded-md bg-gradient-to-r from-indigo-600 to-violet-600 text-white small">Redeem Store</button>
           <button id="openLeaderboard" class="w-full px-3 py-2 rounded-md bg-white/5 small">Leaderboard</button>
+          <button id="openSupport" class="w-full px-3 py-2 rounded-md bg-white/5 small">Help</button>
         </div>
       </div>
 
@@ -284,17 +315,17 @@
 
   <script>
   /**************************************************************************
-   * Rewards page JS
-   **************************************************************************/
+    * Rewards page JS
+    **************************************************************************/
 
   const STORAGE_KEY = 'paisa_rewards_state_v1';
 
   const BADGES = [
-    { id:'novice',   name:'Novice Trader',   desc:'First trade completed', rarity:'common', cost:0, reward:20 },
-    { id:'saver',    name:'Saver',           desc:'Saved ₹1000 in portfolio', rarity:'rare', cost:120, reward:120 },
-    { id:'investor', name:'Investor',        desc:'Complete 5 trades', rarity:'rare', cost:200, reward:200 },
-    { id:'streak7',  name:'7-Day Streak',    desc:'Log in 7 days consecutively', rarity:'legend', cost:0, reward:500, requiresStreak:7 },
-    { id:'legend',   name:'Market Legend',   desc:'100 trades completed', rarity:'legend', cost:1000, reward:2000 }
+    { id:'novice',    name:'Novice Trader',   desc:'First trade completed', rarity:'common', cost:0, reward:20 },
+    { id:'saver',     name:'Saver',           desc:'Saved ₹1000 in portfolio', rarity:'rare', cost:120, reward:120 },
+    { id:'investor', name:'Investor',          desc:'Complete 5 trades', rarity:'rare', cost:200, reward:200 },
+    { id:'streak7',   name:'7-Day Streak',    desc:'Log in 7 days consecutively', rarity:'legend', cost:0, reward:500, requiresStreak:7 },
+    { id:'legend',    name:'Market Legend',   desc:'100 trades completed', rarity:'legend', cost:1000, reward:2000 }
   ];
 
   const STORE_ITEMS = [
@@ -422,8 +453,7 @@
       el.style.width = (6 + Math.random()*10) + 'px';
       el.style.height = (10 + Math.random()*12) + 'px';
       el.style.borderRadius = (2 + Math.random()*2) + 'px';
-      el.style.animation = `confetti-fall ${1.6 + Math.random()*1.6}s linear forwards`;
-      root.appendChild(el);
+      el.style.animation = `confetti-fall ${1.6 + Math.random()*1.6}s linear forwards`; document.body.appendChild(el);
       setTimeout(()=> el.remove(), 3200);
     }
   }
@@ -592,6 +622,13 @@
     });
   }
 
+  /* ---------- help/support modal ---------- */
+  const supportModal = document.getElementById('supportModal');
+  function openSupportModal(){ supportModal.style.display = 'flex'; }
+  function closeSupportModal(){ supportModal.style.display = 'none'; }
+  document.getElementById('openSupportBtnTop').addEventListener('click', openSupportModal);
+  document.getElementById('openSupport').addEventListener('click', openSupportModal);
+
   /* ---------- spawn ambient particles ---------- */
   (function spawnParticles(){
     function make(){
@@ -631,4 +668,3 @@
   </script>
 </body>
 </html>
-
