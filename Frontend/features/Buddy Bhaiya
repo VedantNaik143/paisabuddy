@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PaisaBuddy — Buddy Bhaiya (Chat + History)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Theme */
+    :root {
+      --bg-1: #071023;
+      --glass: rgba(255,255,255,0.03);
+      --accent: #4ade80;
+      --muted: #94a3b8;
+      --card: rgba(255,255,255,0.02);
+    }
+    html,body { height:100%; margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: linear-gradient(135deg,#071023 0%, #121421 50%, #1b1530 100%); color: #e6eef8; }
+
+    /* page layout */
+    .wrap { max-width:1024px; margin:28px auto; padding:14px; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#071024; background: linear-gradient(90deg,var(--accent),#7c3aed); box-shadow: 0 6px 20px rgba(74,222,128,0.08); }
+    h1 { margin:0; font-size:1.25rem; font-weight:800; color: #dbeafe; }
+    .sub { font-size:0.85rem; color:var(--muted); margin-top:2px; }
+
+    /* top controls */
+    .controls { display:flex; gap:8px; align-items:center; }
+    .pill { padding:8px 12px; border-radius:999px; background:var(--glass); color:var(--muted); font-weight:600; font-size:0.9rem; }
+
+    /* main card */
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008)); border:1px solid rgba(255,255,255,0.04); border-radius:14px; box-shadow: 0 12px 40px rgba(2,6,23,0.6); overflow:hidden; display:flex; flex-direction:column; min-height:66vh; }
+
+    /* header tabs */
+    .tabs { display:flex; gap:6px; padding:10px; border-bottom:1px solid rgba(255,255,255,0.03); align-items:center; background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); }
+    .tab-btn { padding:8px 12px; border-radius:10px; cursor:pointer; color:var(--muted); font-weight:700; background:transparent; border:none; }
+    .tab-btn.active { color:#071024; background: linear-gradient(90deg,var(--accent),#7c3aed); box-shadow: 0 6px 18px rgba(124,58,237,0.12); }
+
+    /* content area */
+    .content { display:flex; gap:0; flex:1; min-height:360px; }
+
+    /* chat panel */
+    .chat-panel { flex:1; display:flex; flex-direction:column; min-width:0; }
+    .chat-box { padding:14px; overflow:auto; flex:1; display:flex; flex-direction:column; gap:8px; }
+    .bubble { max-width:75%; padding:10px 12px; border-radius:12px; font-size:0.95rem; line-height:1.35; word-break:break-word; box-shadow: 0 6px 18px rgba(2,6,23,0.35); }
+    .bubble.bot { background: linear-gradient(90deg,#0f1724,#111827); color:#e6eef8; align-self:flex-start; border-bottom-left-radius:4px; }
+    .bubble.user { background: linear-gradient(90deg,var(--accent),#22c55e); color:#071024; align-self:flex-end; border-bottom-right-radius:4px; }
+    .meta { font-size:0.72rem; color:var(--muted); margin-top:6px; }
+
+    /* composer */
+    .composer { display:flex; gap:8px; padding:12px; border-top:1px solid rgba(255,255,255,0.03); align-items:center; background:linear-gradient(180deg, transparent, rgba(0,0,0,0.02)); }
+    .txt { flex:1; min-height:44px; max-height:160px; resize:none; padding:10px 12px; border-radius:12px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color: #e6eef8; font-size:0.95rem; }
+    .btn { padding:10px 12px; border-radius:10px; font-weight:800; cursor:pointer; border:none; }
+    .btn.send { background: linear-gradient(90deg,var(--accent),#7c3aed); color:#071024; }
+    .icon { background: var(--glass); padding:8px; border-radius:10px; cursor:pointer; color:var(--muted); }
+
+    /* history panel */
+    .history-panel { width:360px; border-left:1px solid rgba(255,255,255,0.02); background: linear-gradient(180deg, rgba(255,255,255,0.006), transparent); display:flex; flex-direction:column; }
+    .history-head { padding:12px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid rgba(255,255,255,0.02); }
+    .hist-list { padding:12px; overflow:auto; flex:1; display:flex; flex-direction:column; gap:8px; }
+    .hist-item { background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; cursor:pointer; }
+    .hist-item .who { font-weight:700; color:var(--accent); }
+    .hist-controls { display:flex; gap:8px; }
+
+    /* small helpers */
+    .typing { display:inline-flex; gap:6px; align-items:center; }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--muted); opacity:0.7; animation:dot 1s infinite; }
+    .dot:nth-child(2){ animation-delay:.15s; } .dot:nth-child(3){ animation-delay:.3s; }
+    @keyframes dot { 0%{transform:translateY(0);opacity:.4} 50%{transform:translateY(-6px);opacity:1} 100%{transform:translateY(0);opacity:.4} }
+
+    /* small screens */
+    @media (max-width:950px) {
+      .content { flex-direction:column; }
+      .history-panel { width:100%; height:260px; border-left:none; border-top:1px solid rgba(255,255,255,0.02); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">BB</div>
+        <div>
+          <h1>Buddy Bhaiya</h1>
+          <div class="sub">Trading & investing assistant — local KB + smart tools</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="pill" id="kbPercent">KB 95%</div>
+        <button class="pill" id="exportAll">Export</button>
+        <button class="pill" id="clearAll">Clear</button>
+      </div>
+    </header>
+
+    <div class="card" role="application" aria-label="Buddy Bhaiya chat">
+      <div class="tabs" role="tablist" aria-label="Chat and History tabs">
+        <button class="tab-btn active" id="tabChat">Chat</button>
+        <button class="tab-btn" id="tabHistory">History</button>
+        <div style="flex:1"></div>
+        <div style="color:var(--muted);font-weight:600">Local-only · No external calls</div>
+      </div>
+
+      <div class="content">
+        <!-- CHAT PANEL -->
+        <section class="chat-panel" id="chatPanel" aria-hidden="false">
+          <div class="chat-box" id="chatBox" aria-live="polite" aria-atomic="false">
+            <!-- messages injected here -->
+          </div>
+
+          <div class="composer" role="region" aria-label="Message composer">
+            <button class="icon" id="micBtn" title="Voice input">🎤</button>
+            <textarea id="inputBox" class="txt" placeholder="Ask about trading: e.g., 'What is a stop-loss?', 'Calculate PnL entry 100 exit 110 qty 10'"></textarea>
+            <button class="btn send" id="sendBtn">Send</button>
+          </div>
+        </section>
+
+        <!-- HISTORY PANEL -->
+        <aside class="history-panel" id="historyPanel" aria-hidden="true">
+          <div class="history-head">
+            <div style="font-weight:700">Chat History</div>
+            <div class="hist-controls">
+              <button class="pill" id="exportBtn">Export</button>
+              <button class="pill" id="clearBtn">Clear</button>
+            </div>
+          </div>
+
+          <div class="hist-list" id="historyList">
+            <!-- history items injected here -->
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* =========================
+   Buddy Bhaiya — local advanced chat
+   - Large trading KB
+   - Fuzzy matching + calculators (PnL, position size, option breakeven)
+   - LocalStorage persistence
+   - Chat <-> History combined in one page
+   - Voice input (Web Speech API) if available
+   ========================= */
+
+const STORAGE_KEY = 'buddyBhaiya_chat_v3';
+
+// ---------- Utilities ----------
+const el = id => document.getElementById(id);
+const nowStr = d => {
+  const dt = d ? new Date(d) : new Date();
+  return dt.toLocaleString();
+};
+const formatDateKey = d => {
+  const dt = new Date(d);
+  return dt.toISOString().slice(0,10); // YYYY-MM-DD
+};
+
+// safe load/save
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function saveHistory(arr) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+  catch(e){ console.warn('saveHistory failed', e); }
+}
+
+/* ---------- Large Trading KB ----------
+   Array of entries: keys (string array) and answer string.
+   This KB is intentionally large and covers core trading topics,
+   order types, derivatives, options, indicators, risk management, brokerage, taxes etc.
+*/
+const KB = [
+  { keys: ['what is stock','stock','share','equity'], answer: "A stock (share) is a unit of ownership in a company. Stocks can provide growth but carry risk; diversify and invest based on horizon." },
+  { keys: ['what is ipo','ipo','initial public offering'], answer: "IPO = when a private company offers shares publicly. Retail investors can apply via broker; IPOs can be volatile post-listing." },
+  { keys: ['market order','market'], answer: "Market order executes immediately at current market price. It may suffer slippage in fast markets." },
+  { keys: ['limit order','limit'], answer: "Limit order executes at a specified price or better. Use it when you want control over execution price." },
+  { keys: ['stop loss','stoploss','stop-loss'], answer: "Stop-loss is an order to exit if price hits a set level to limit losses. Use appropriate stop distance to avoid noise while protecting capital." },
+  { keys: ['stop-limit order','stop limit'], answer: "Stop-limit places a limit order when a stop price is reached. Useful to avoid market orders but may not execute in fast moves." },
+  { keys: ['buy to open','sell to open','short sell','shorting','short'], answer: "Short selling borrows shares to sell now and buy back later expecting price drop. Remember short risks are theoretically unlimited; use strict risk controls." },
+  { keys: ['margin','leverage','margin trading'], answer: "Margin allows larger positions using borrowed funds. Leverage amplifies gains and losses — keep leverage low, know margin call rules." },
+  { keys: ['futures','futures contract','future'], answer: "Futures are contracts to buy/sell an asset at a future date at agreed price. They use margin and are settled per exchange rules." },
+  { keys: ['options','option','call','put'], answer: "Options give the right (not obligation) to buy/sell at a strike price. Calls (buy right to buy) and Puts (buy right to sell). Options have premium and Greeks (Delta, Theta...)." },
+  { keys: ['greeks','delta','gamma','theta','vega','rho'], answer: "Greeks measure option sensitivities: Delta (price), Gamma (delta change), Theta (time decay), Vega (volatility), Rho (rates). Useful for advanced option risk." },
+  { keys: ['intraday','day trading','intraday trading'], answer: "Intraday means open and close position same day. Requires speed, discipline, and attention to brokerage & taxes. Watch slippage and costs." },
+  { keys: ['position sizing','position size','size'], answer: "Position sizing determines how many units to trade. A simple rule: risk per trade = capital * risk% (e.g., 1%), qty = riskPerTrade / (entryPrice - stopPrice)." },
+  { keys: ['risk management','risk','risk per trade'], answer: "Risk management is primary: limit risk per trade, diversify, use stops, position-size properly, and don't over-leverage." },
+  { keys: ['technical analysis','ta','indicators','chart'], answer: "Technical analysis studies price charts and indicators (moving averages, RSI, MACD) to find patterns and timing." },
+  { keys: ['fundamental analysis','fa','earnings','pe ratio'], answer: "Fundamental analysis evaluates company financials, growth, margins, and valuations (P/E) for longer-term investing." },
+  { keys: ['moving average','sma','ema'], answer: "SMA is simple moving average; EMA gives more weight to recent prices. Crossovers of MA lines are common signals." },
+  { keys: ['rsi','relative strength index'], answer: "RSI measures momentum (0-100). Readings above ~70 may indicate overbought, below ~30 oversold — use with other signals." },
+  { keys: ['macd'], answer: "MACD is a momentum oscillator of EMA differences; look at MACD line vs signal line crossovers and histogram." },
+  { keys: ['bollinger','bollinger bands'], answer: "Bollinger Bands plot a moving average with upper/lower bands based on volatility (std dev). Price touching bands can signal reversion or breakout." },
+  { keys: ['support','resistance','s&r'], answer: "Support is a level where buyers step in; resistance where sellers appear. Breakouts past resistance can signal continuation if volume confirms." },
+  { keys: ['volume'], answer: "Volume shows traded quantity — rising volume with price move confirms conviction; low volume breakouts are suspect." },
+  { keys: ['slippage'], answer: "Slippage = difference between expected price and executed price, common in fast-moving or illiquid markets. Use limit orders to reduce slippage." },
+  { keys: ['liquidity'], answer: "Liquidity = how easy it is to buy/sell without big price impact. Prefer liquid stocks/derivatives to avoid execution issues." },
+  { keys: ['volatility','implied volatility','iv'], answer: "Volatility measures price swings. Implied volatility drives option premiums — higher IV = higher option prices." },
+  { keys: ['implied vol','expected move'], answer: "Expected move estimates range the market expects over a period, often derived from option prices." },
+  { keys: ['tax','capital gains','ltcg','stcg'], answer: "Tax rules vary by jurisdiction. Typically capital gains tax depends on holding period; in India, equity LTCG/STCG rules apply. Consult a tax pro for specifics." },
+  { keys: ['broker','brokerage','demat','demat account'], answer: "Choose a broker with reliable platform, transparent fees, and reasonable brokerage. Compare account opening, DP charges, and margin facility." },
+  { keys: ['backtesting','strategy testing'], answer: "Backtesting checks a strategy over historical data. Use robust data, avoid overfitting, and test across regimes." },
+  { keys: ['paper trading','demo account','virtual trading'], answer: "Paper trading simulates trading without real money — great for learning execution and strategy validation." },
+  { keys: ['order types','oco','ifd','oco order'], answer: "Advanced order types (OCO, IFD) combine primary and protective orders. Use carefully; not all brokers support them." },
+  { keys: ['candlestick','candles','wick','body'], answer: "Candlesticks show open/high/low/close — wicks indicate rejection. Patterns like Doji, Hammer, Engulfing convey market sentiment." },
+  { keys: ['breakout','false breakout','breakout trading'], answer: "A breakout is price moving beyond a level. Check volume and retest; false breakouts happen often." },
+  { keys: ['dividend','dividends'], answer: "Dividends are profit distributions by companies. Dividend yield is income/price; many investors use them as part of returns." },
+  { keys: ['fundamental ratios','pe ratio','peg','pb ratio'], answer: "Valuation ratios (P/E, P/B, PEG) help compare stocks. Use alongside growth and sector context." },
+  { keys: ['compound interest','compounding'], answer: "Compounding means returns earn returns — starting early dramatically increases final corpus." },
+  { keys: ['stop loss calculation','stoploss calc'], answer: "Set stop based on volatility or technical level. Combine with position sizing: risk per share = entry - stop; qty = riskBudget / riskPerShare." },
+  { keys: ['margin requirement','initial margin','maintenance margin'], answer: "Margin requirements differ by instrument and exchange. Maintenance margin is the minimum required; falling below triggers margin call." },
+  { keys: ['order execution','order routing'], answer: "Order routing and broker speed affect execution. Market orders may fill at worse prices during volatility." },
+  { keys: ['trade cost','brokerage cost','transaction cost'], answer: "Include brokerage, exchange fees, taxes and slippage when evaluating strategy viability." },
+  { keys: ['position sizing formula','qty calc'], answer: "Basic formula: riskPerTrade = capital * riskPct; qty = floor(riskPerTrade / (entryPrice - stopPrice)). Example: capital ₹1,00,000, risk 1% -> ₹1,000 risk." },
+  { keys: ['options breakeven','breakeven call','breakeven put'], answer: "Call buyer breakeven = strike + premium paid. Put buyer breakeven = strike - premium paid." },
+  { keys: ['long call','long put','buy call','buy put'], answer: "Buying options gives limited loss (premium) and unlimited/limited upside depending on call/put. Premium is the cost (and max loss for buyer)." },
+  { keys: ['sell call','write call','short call'], answer: "Writing options has limited gain (premium) but potentially large loss. Use covered positions or collateral for safety." },
+  { keys: ['straddle','strangle','options strategy'], answer: "Straddle = buy call + put same strike for volatility bet. Strangle uses different strikes. Strategies vary by view on volatility/direction." },
+  { keys: ['iron condor','butterfly','condor'], answer: "Iron condor/butterfly are sell and buy option combos to profit from range-bound markets with limited risk." },
+  { keys: ['order book','market depth','bid ask'], answer: "Order book shows buy (bid) and sell (ask) orders. Tight bid-ask indicates liquidity; wide gap increases cost." },
+  { keys: ['algo trading','automated trading'], answer: "Algo trading automates execution based on rules. Beware of technical issues and thorough testing in live environment." },
+  { keys: ['market hours','trading hours'], answer: "Market hours differ by exchange — trade only during active hours and be aware of pre/post-market session rules." },
+  { keys: ['corporate action','bonus','split','dividend record'], answer: "Corporate actions (splits, dividends, bonus) affect shares and record dates — check announcements before trading ex-dates." },
+  { keys: ['limit sell','take profit','tp'], answer: "Take-profit limit order helps secure gains. Combine with trailing stop to lock profits while allowing upside." },
+  { keys: ['trailing stop','trailing stop loss'], answer: "Trailing stop moves stop level as price moves in your favor — keeps profits while protecting downside." },
+  { keys: ['time frame','timeframe','intraday vs swing vs position'], answer: "Timeframe: intraday (minutes), swing (days-weeks), position (weeks-years). Choose instruments and strategies accordingly." },
+  { keys: ['spread','bid-ask spread'], answer: "Spread = ask - bid. Large spreads increase transaction cost, especially important for small-timeframe trading." },
+  { keys: ['gap up','gap down'], answer: "Gap up/down occurs when price opens above/below previous close — can signal strong news-driven moves; watch for gap fills." },
+  { keys: ['paper trading platform','virtual trading platform'], answer: "Many brokers offer virtual trading — use to learn and validate strategies risk-free." },
+  { keys: ['overnight risk','holding overnight'], answer: "Holding overnight exposes you to news and gaps — reduce position size or hedge overnight if concerned." },
+  { keys: ['diversification vs concentration'], answer: "Diversify to reduce idiosyncratic risk. Concentration can outperform but increases risk — match to your risk appetite." },
+  { keys: ['systematic investing','sip benefits'], answer: "SIP encourages discipline, leverages rupee-cost averaging and is ideal for long-term investing." },
+  { keys: ['tax harvesting','loss harvesting'], answer: "Tax-loss harvesting sells losers to offset gains. Rules vary — follow local tax rules and wash-sale regulations." },
+  { keys: ['stop hunting','manipulation'], answer: "Stop-hunting refers to deliberate moves to trigger stops. Use wider stops and avoid visible cluster stop levels on thinly traded names." },
+  { keys: ['risk to reward','risk reward ratio','r:r'], answer: "Use risk:reward to evaluate trades (e.g., 1:3 means risking 1 to potentially make 3). Higher R:R reduces win-rate required for profitability." },
+  { keys: ['win rate','expectancy'], answer: "Profit expectancy = (win% * avgWin) - (loss% * avgLoss). A strategy with positive expectancy is desirable even with <50% win rate." },
+  { keys: ['position averaging','averaging down','dca vs averaging'], answer: "Averaging down can lower cost but increases exposure; DCA (dollar-cost averaging) is for disciplined accumulation, not rescue buying." },
+  { keys: ['confirmation','confluence'], answer: "Use multiple signals (trend + volume + support) for confluence before taking trades, reduces false signals." },
+  { keys: ['liquidate','exit rules'], answer: "Define exit rules ahead: stop loss, take profit, time-based exit, or volatility-based exit." },
+  { keys: ['broker risk','custodian risk','counterparty risk'], answer: "Broker failure risk exists; prefer regulated brokers, check fund segregation and grievance redressal." },
+  { keys: ['api trading','broker api','rest api'], answer: "Many brokers provide APIs for algo trading. Secure API keys and implement rate/lifetime limits and error handling." },
+  { keys: ['best practices','trader rules'], answer: "Keep a trading journal, control position sizes, manage risk, test strategies, and limit impulsive trading." }
+];
+
+// ---------- Smart matching ----------
+function norm(s) {
+  return (s||'').toString().toLowerCase().replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+// returns {entry,score} or null
+function matchKB(query) {
+  const q = norm(query);
+  if(!q) return null;
+  const qTokens = q.split(' ');
+  let best = {score:0,index:-1};
+  KB.forEach((entry, i) => {
+    let hits = 0;
+    const keys = entry.keys.map(k => norm(k));
+    keys.forEach(k => {
+      if(!k) return;
+      if(q.includes(k)) hits += 3;           // substring match strong
+      const ktoks = k.split(' ');
+      ktoks.forEach(t => { if(qTokens.includes(t)) hits += 1; });
+    });
+    const denom = Math.max(1, keys.join(' ').split(' ').length);
+    const score = hits / (denom+1);
+    if(score > best.score) best = {score, index: i};
+  });
+  // threshold tunable; permissive to cover many queries
+  if(best.score > 0.18) return { entry: KB[best.index], confidence: Math.min(99, Math.round(best.score*100)) };
+  return null;
+}
+
+// ---------- calculators & parsers ----------
+
+// Try to parse PnL: patterns like 'pnl 100 110 10' or 'profit 100 110 qty 10' or 'entry 100 exit 110 qty 10'
+function tryParsePnL(text) {
+  const n = text.toLowerCase();
+  // extract numbers
+  const nums = (n.match(/-?\d+(\.\d+)?/g) || []).map(x => Number(x));
+  // naive heuristics: if 3 numbers (entry, exit, qty)
+  if(nums.length >= 3) {
+    const [a,b,c] = nums;
+    // decide which are entry/exit/qty based on words present
+    // if text contains 'entry' then a=entry
+    let entry=nums[0], exit=nums[1], qty=nums[2];
+    if(n.includes('entry') && n.includes('exit') && n.includes('qty')) {
+      // keep order
+    } else if(n.includes('profit') || n.includes('pnl')) {
+      // assume entry exit qty
+    } else {
+      // if third number very large treat as amount? fallback to order
+    }
+    const pnl = (exit - entry) * qty;
+    const percent = ((exit - entry) / (entry || 1)) * 100;
+    return { calc: true, entry, exit, qty, pnl, pct: percent.toFixed(2) };
+  }
+  // fallback: pattern like "calculate pnl entry=100 exit=110 qty=10"
+  const m = /entry[:= ]\s*([0-9.]+).*exit[:= ]\s*([0-9.]+).*qty[:= ]\s*([0-9.]+)/i.exec(text);
+  if(m) {
+    const entry = Number(m[1]), exit = Number(m[2]), qty = Number(m[3]);
+    const pnl = (exit - entry) * qty; const pct = ((exit - entry)/entry)*100;
+    return { calc:true, entry, exit, qty, pnl, pct: pct.toFixed(2) };
+  }
+  return { calc:false };
+}
+
+// Position size calculator: "position size capital 100000 risk 1% entry 200 stop 190"
+function tryParsePositionSize(text) {
+  const n = text.toLowerCase();
+  const nums = (n.match(/-?\d+(\.\d+)?/g) || []).map(x=>Number(x));
+  const capitalMatch = /capital[:= ]\s*([0-9.]+)/i.exec(text);
+  const riskMatch = /risk[:= ]\s*([0-9.]+)\s*%?/i.exec(text);
+  const entryMatch = /entry[:= ]\s*([0-9.]+)/i.exec(text);
+  const stopMatch = /stop[:= ]\s*([0-9.]+)/i.exec(text);
+
+  const capital = capitalMatch ? Number(capitalMatch[1]) : (nums[0] || null);
+  const riskPct = riskMatch ? Number(riskMatch[1]) : null;
+  const entry = entryMatch ? Number(entryMatch[1]) : (nums[1] || null);
+  const stop = stopMatch ? Number(stopMatch[1]) : (nums[2] || null);
+
+  if(capital && riskPct !== null && entry && stop && (entry - stop) !== 0) {
+    const riskAmt = capital * (riskPct/100);
+    const qty = Math.floor(riskAmt / Math.abs(entry - stop));
+    return { calc:true, capital, riskPct, entry, stop, qty, riskAmt };
+  }
+  return { calc:false };
+}
+
+// Option breakeven: "breakeven call strike 200 premium 5"
+function tryParseOption(text){
+  const n = text.toLowerCase();
+  const matchCall = /call.*strike[:= ]\s*([0-9.]+).*premium[:= ]\s*([0-9.]+)/i.exec(text);
+  const matchPut = /put.*strike[:= ]\s*([0-9.]+).*premium[:= ]\s*([0-9.]+)/i.exec(text);
+  if(matchCall){
+    const strike = Number(matchCall[1]), premium = Number(matchCall[2]);
+    const be = strike + premium;
+    return { calc:true, type:'call', strike, premium, breakeven:be };
+  }
+  if(matchPut){
+    const strike = Number(matchPut[1]), premium = Number(matchPut[2]);
+    const be = strike - premium;
+    return { calc:true, type:'put', strike, premium, breakeven:be };
+  }
+  // also simple "breakeven 200 5 call"
+  const m2 = /(breakeven|break even).*(call|put)?.*([0-9.]+).*([0-9.]+)/i.exec(text);
+  if(m2){
+    // ambiguous — ignore
+  }
+  return { calc:false };
+}
+
+// ---------- Chat rendering & flow ----------
+const chatBox = el('chatBox');
+const inputBox = el('inputBox');
+const sendBtn = el('sendBtn');
+const micBtn = el('micBtn');
+const historyList = el('historyList');
+const tabChat = el('tabChat');
+const tabHistory = el('tabHistory');
+const chatPanel = el('chatPanel');
+const historyPanel = el('historyPanel');
+const kbPercent = el('kbPercent');
+
+let history = loadHistory(); // array of {who:'user'|'bot', text, at:ISO}
+
+// render history list (grouped by date)
+function renderHistoryList(){
+  historyList.innerHTML = '';
+  if(history.length === 0){
+    const p = document.createElement('div'); p.className='meta'; p.style.padding='12px'; p.innerText = 'No saved chats yet.';
+    historyList.appendChild(p); return;
+  }
+  // group by date
+  const groups = {};
+  history.forEach(msg => {
+    const k = formatDateKey(msg.at);
+    groups[k] = groups[k] || [];
+    groups[k].push(msg);
+  });
+  const dates = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+  dates.forEach(date => {
+    const hdr = document.createElement('div'); hdr.className='meta'; hdr.style.fontWeight=700; hdr.style.marginTop='6px'; hdr.innerText = date;
+    historyList.appendChild(hdr);
+    groups[date].forEach(m => {
+      const item = document.createElement('div'); item.className='hist-item';
+      const who = document.createElement('div'); who.className='who'; who.innerText = m.who === 'user' ? 'You' : 'Buddy Bhaiya';
+      const txt = document.createElement('div'); txt.style.marginTop='6px'; txt.style.whiteSpace='pre-wrap'; txt.innerText = m.text;
+      const meta = document.createElement('div'); meta.className='meta'; meta.innerText = new Date(m.at).toLocaleTimeString();
+      item.appendChild(who); item.appendChild(txt); item.appendChild(meta);
+      // clicking a history item copies it to input for reuse
+      item.addEventListener('click', ()=> {
+        inputBox.value = m.text;
+        // switch to chat tab
+        showTab('chat');
+        inputBox.focus();
+      });
+      historyList.appendChild(item);
+    });
+  });
+}
+
+// append a message bubble
+function appendBubble(text, who='bot', options={save:true, meta:''}) {
+  const b = document.createElement('div');
+  b.className = 'bubble ' + (who === 'user' ? 'user' : 'bot');
+  b.innerHTML = text.replace(/\n/g, '<br>');
+  if(options.meta !== '') {
+    const m = document.createElement('div'); m.className = 'meta'; m.innerText = options.meta;
+    b.appendChild(m);
+  } else {
+    const m = document.createElement('div'); m.className='meta'; m.innerText = nowStr();
+    b.appendChild(m);
+  }
+  chatBox.appendChild(b);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  if(options.save) {
+    history.push({ who: who === 'user' ? 'user' : 'bot', text, at: new Date().toISOString() });
+    saveHistory(history);
+    renderHistoryList();
+  }
+}
+
+// typing indicator helper
+function showTyping() {
+  const t = document.createElement('div'); t.className = 'bubble bot'; t.id='typingBubble';
+  t.innerHTML = '<div class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  const meta = document.createElement('div'); meta.className='meta'; meta.innerText = 'Buddy Bhaiya is thinking...';
+  t.appendChild(meta);
+  chatBox.appendChild(t);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+function removeTyping() {
+  const t = document.getElementById('typingBubble'); if(t) t.remove();
+}
+
+// progressive typed reply
+function typeReply(fullText) {
+  return new Promise(resolve => {
+    const elb = document.createElement('div'); elb.className='bubble bot'; 
+    const content = document.createElement('div'); elb.appendChild(content);
+    const meta = document.createElement('div'); meta.className='meta'; meta.innerText = nowStr(); elb.appendChild(meta);
+    chatBox.appendChild(elb);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    let i = 0;
+    const speed = Math.max(6, 12 - Math.floor(fullText.length/120));
+    const timer = setInterval(() => {
+      i++;
+      content.innerText = fullText.slice(0,i);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      if(i >= fullText.length) {
+        clearInterval(timer); resolve();
+      }
+    }, speed);
+  });
+}
+
+// respond logic: tries calculators first, then KB, then fallback
+async function respondTo(text) {
+  // calculators
+  const pnl = tryParsePnL(text);
+  if(pnl.calc) {
+    const reply = `PnL Calculation:\nEntry: ${pnl.entry}\nExit: ${pnl.exit}\nQty: ${pnl.qty}\nProfit/Loss: ${pnl.pnl >=0 ? '₹' + pnl.pnl.toLocaleString() : '-₹' + Math.abs(pnl.pnl).toLocaleString()}\nReturn: ${pnl.pct}%`;
+    await typeReply(reply);
+    history.push({ who:'bot', text:reply, at: new Date().toISOString() }); saveHistory(history); renderHistoryList(); return;
+  }
+  const pos = tryParsePositionSize(text);
+  if(pos.calc) {
+    const reply = `Position Size Calculation:\nCapital: ₹${pos.capital.toLocaleString()}\nRisk: ${pos.riskPct}% (₹${pos.riskAmt.toLocaleString()})\nEntry: ₹${pos.entry}\nStop: ₹${pos.stop}\nSuggested qty: ${pos.qty} (approx.)\n(Note: round down to whole units and account for transaction costs)`;
+    await typeReply(reply);
+    history.push({ who:'bot', text:reply, at: new Date().toISOString() }); saveHistory(history); renderHistoryList(); return;
+  }
+  const opt = tryParseOption(text);
+  if(opt.calc) {
+    if(opt.type === 'call') {
+      const reply = `Options breakeven (Call):\nStrike: ₹${opt.strike}\nPremium: ₹${opt.premium}\nBreakeven = Strike + Premium = ₹${opt.breakeven}`;
+      await typeReply(reply);
+      history.push({ who:'bot', text:reply, at: new Date().toISOString() }); saveHistory(history); renderHistoryList(); return;
+    } else {
+      const reply = `Options breakeven (Put):\nStrike: ₹${opt.strike}\nPremium: ₹${opt.premium}\nBreakeven = Strike - Premium = ₹${opt.breakeven}`;
+      await typeReply(reply);
+      history.push({ who:'bot', text:reply, at: new Date().toISOString() }); saveHistory(history); renderHistoryList(); return;
+    }
+  }
+
+  // KB match
+  const m = matchKB(text);
+  if(m) {
+    // show confidence and answer
+    const ans = `${m.entry.answer}\n\n(Confidence: ${m.confidence}%)`;
+    await typeReply(ans);
+    history.push({ who:'bot', text:ans, at: new Date().toISOString() }); saveHistory(history); renderHistoryList(); return;
+  }
+
+  // fallback smart response
+  const fallback = generateFallback(text);
+  await typeReply(fallback);
+  history.push({ who:'bot', text:fallback, at: new Date().toISOString() }); saveHistory(history); renderHistoryList();
+}
+
+// fallback generator gives structured guidance
+function generateFallback(text) {
+  const q = norm(text);
+  if(q.includes('how to start') || q.includes('how start') || q.includes('where to start') || q.includes('begin')) {
+    return `Start small and simple:\n1) Set a monthly saving/invest amount (e.g., ₹1000).\n2) Use an index fund SIP for long-term (>=5 years) or a paper trading account for practice.\n3) Learn order types and practice position sizing.\nIf you give me your capital and stop distance I can compute suggested position size. Try: "position size capital 100000 risk 1% entry 250 stop 245"`;
+  }
+  if(q.includes('calculate') || q.includes('calculator') || q.includes('pnl') || q.includes('position size')) {
+    return `I can calculate PnL, position size and option breakevens. Examples:\n- "PnL entry 100 exit 110 qty 10"\n- "position size capital 100000 risk 1% entry 200 stop 190"\n- "call strike 200 premium 5"`;
+  }
+  // generic helpful answer with steps
+  return `I don't have an exact KB match, but here's a practical approach:\n1) Clarify objective & horizon.\n2) Determine risk per trade (e.g., 1% of capital).\n3) Choose instrument/timeframe and position size accordingly.\nAsk me for a calculator or a definition (e.g., "What is RSI?").`;
+}
+
+// ---------- send flow ----------
+async function sendFlow() {
+  const text = inputBox.value.trim();
+  if(!text) return;
+  // user bubble
+  appendBubble(text, 'user');
+  // remove typing if any
+  removeTyping();
+  // show typing
+  showTyping();
+  inputBox.value = '';
+  // small delay then respond
+  await new Promise(r=>setTimeout(r, 500 + Math.random()*700));
+  removeTyping();
+  await respondTo(text);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// ---------- initial load ----------
+function renderAllHistoryToChat() {
+  chatBox.innerHTML = '';
+  if(history.length === 0) {
+    const welcome = "Hi! I'm Buddy Bhaiya — your trading assistant. Ask about orders, margin, options, indicators, position-sizing, or use calculators like PnL and position size. Try: \"What is a stop-loss?\" or \"PnL 100 110 10\"";
+    appendBubble(welcome, 'bot', { save:false, meta: nowStr() });
+  } else {
+    // show last N messages to chat (limit to avoid huge loads)
+    const rows = history.slice(-200);
+    rows.forEach(m => appendBubble(m.text, m.who, { save:false, meta: new Date(m.at).toLocaleString() }));
+  }
+  renderHistoryList();
+}
+
+// ---------- tabs ----------
+function showTab(tab) {
+  if(tab === 'history') {
+    tabChat.classList.remove('active');
+    tabHistory.classList.add('active');
+    chatPanel.style.display = 'none';
+    historyPanel.style.display = 'flex';
+  } else {
+    tabChat.classList.add('active');
+    tabHistory.classList.remove('active');
+    chatPanel.style.display = 'flex';
+    historyPanel.style.display = 'none';
+  }
+}
+
+// ---------- export / clear ----------
+function exportHistory() {
+  const data = loadHistory();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'buddy_bhaiya_history.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function clearHistoryAll() {
+  if(!confirm('Clear entire chat history? This cannot be undone.')) return;
+  history = [];
+  saveHistory(history);
+  renderAllHistoryToChat();
+  renderHistoryList();
+}
+
+// ---------- voice input ----------
+let recognition = null;
+if(window.SpeechRecognition || window.webkitSpeechRecognition){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'en-IN';
+  recognition.interimResults = false;
+  recognition.onresult = function(ev) {
+    const text = ev.results[0][0].transcript;
+    inputBox.value = text;
+    // auto send
+    sendFlow();
+  };
+}
+
+// ---------- kb percent (display only) ----------
+kbPercent.innerText = 'KB ' + Math.min(99, Math.max(70, Math.round((KB.length / 120) * 100))) + '%'; // rough display
+
+// ---------- events ----------
+sendBtn.addEventListener('click', sendFlow);
+inputBox.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFlow(); }
+});
+micBtn.addEventListener('click', ()=> {
+  if(!recognition) { alert('Voice input not supported in this browser'); return; }
+  recognition.start();
+});
+
+// tab switches
+tabChat.addEventListener('click', ()=> showTab('chat'));
+tabHistory.addEventListener('click', ()=> showTab('history'));
+
+// export/clear buttons
+el('exportBtn').addEventListener('click', exportHistory);
+el('exportAll').addEventListener('click', exportHistory);
+el('clearBtn').addEventListener('click', clearHistoryAll);
+el('clearAll').addEventListener('click', clearHistoryAll);
+
+// initialize
+renderAllHistoryToChat();
+
+// expose some helpers for debugging (optional)
+window.BUDDY_HISTORY = history;
+window.BUDDY_SAVE = () => saveHistory(history);
+
+  </script>
+</body>
+</html>
