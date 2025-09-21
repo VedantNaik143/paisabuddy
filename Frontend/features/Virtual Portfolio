@@ -41,7 +41,7 @@
     }
 
     /* ========== Select styling: visible control is white, pop-up options are dark ========== */
-    select {
+    select.global-select {
       background-color: rgba(255,255,255,1);
       color: #071024;
       border-radius: 0.5rem;
@@ -77,6 +77,18 @@
       border-radius: 0.625rem;
       padding: 0.6rem;
       margin-bottom: 0.5rem;
+      transition: box-shadow .25s ease, border-color .25s ease;
+    }
+    /* highlight for first-time */
+    #tradeModal .selector-block.first-time-highlight {
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.06), 0 8px 24px rgba(2,6,23,0.6);
+      border-color: rgba(74,222,128,0.14);
+      animation: pulse-border 2.2s infinite;
+    }
+    @keyframes pulse-border {
+      0% { box-shadow: 0 0 0 2px rgba(74,222,128,0.04); }
+      50% { box-shadow: 0 0 0 6px rgba(74,222,128,0.03); }
+      100% { box-shadow: 0 0 0 2px rgba(74,222,128,0.04); }
     }
     /* override selects inside the trade modal so they are dark with light text */
     #tradeModal .selector-block select {
@@ -92,6 +104,25 @@
       font-size: 0.85rem;
       display: block;
       margin-bottom: 0.25rem;
+    }
+
+    /* first-time guide */
+    #firstTimeGuide {
+      background: linear-gradient(180deg, rgba(34,197,94,0.06), rgba(34,197,94,0.02));
+      border: 1px solid rgba(74,222,128,0.08);
+      padding: 0.6rem;
+      border-radius: 0.5rem;
+      color: #e6eef8;
+      font-size: 0.92rem;
+      display: none;
+    }
+    #firstTimeGuide .guide-actions { margin-top: 0.5rem; display:flex; justify-content:flex-end; gap:8px; }
+
+    /* execute button disabled look */
+    button[disabled] {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
     }
 
     /* ========== Marquee for long holdings names (only when overflow) ========== */
@@ -250,25 +281,40 @@
   </main>
 
   <!-- Trade Modal -->
-  <div id="tradeModal" class="fixed inset-0 hidden items-center justify-center z-50">
-    <div class="backdrop absolute inset-0"></div>
-    <div class="relative z-10 w-full max-w-xl neon-card p-6">
+  <div id="tradeModal" class="fixed inset-0 hidden items-center justify-center z-50" aria-hidden="true">
+    <div class="backdrop absolute inset-0" aria-hidden="true"></div>
+    <div class="relative z-10 w-full max-w-xl neon-card p-6" role="dialog" aria-modal="true" aria-labelledby="tradeTitle">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Trade Simulator</h3>
-        <button id="closeTrade" class="text-gray-300">✖</button>
+        <h3 id="tradeTitle" class="text-lg font-semibold">Trade Simulator</h3>
+        <button id="closeTrade" class="text-gray-300" aria-label="Close trade modal">✖</button>
       </div>
 
-      <form id="tradeForm" class="space-y-4">
+      <form id="tradeForm" class="space-y-4" novalidate>
         <!-- <<< UPDATED: selector block wrapped and styled so selects are dark + readable >>> -->
-        <div class="selector-block">
+        <div id="selectorBlock" class="selector-block">
+          <!-- first-time guide box (hidden by default) -->
+          <div id="firstTimeGuide" class="">
+            <div><strong>Tip:</strong> Start by choosing an asset and trade type. Then enter quantity & price to enable Execute.</div>
+            <ol class="mt-2 text-sm text-gray-300" style="padding-left:18px;line-height:1.25;">
+              <li>1) Select <strong>Asset</strong></li>
+              <li>2) Select <strong>Buy</strong> or <strong>Sell</strong></li>
+              <li>3) Enter <strong>Quantity</strong> and <strong>Price</strong></li>
+            </ol>
+            <div class="guide-actions">
+              <button id="guideGotIt" type="button" class="px-3 py-1 rounded-md glow-btn">Got it</button>
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="text-sm text-gray-300">Asset</label>
-              <select id="tradeAsset" class="text-sm rounded-md p-2"></select>
+              <!-- placeholder option inserted by populateTradeAssets() -->
+              <select id="tradeAsset" class="text-sm rounded-md p-2 selector-select" aria-required="true"></select>
             </div>
             <div>
               <label class="text-sm text-gray-300">Type</label>
-              <select id="tradeType" class="text-sm rounded-md p-2">
+              <select id="tradeType" class="text-sm rounded-md p-2 selector-select" aria-required="true">
+                <option value="" disabled selected>Select type...</option>
                 <option value="buy">Buy</option>
                 <option value="sell">Sell</option>
               </select>
@@ -293,7 +339,7 @@
 
         <div class="flex justify-end gap-3">
           <button type="button" id="tradeCancel" class="px-4 py-2 rounded-md bg-white/5">Cancel</button>
-          <button type="submit" class="px-4 py-2 rounded-md glow-btn">Execute</button>
+          <button id="executeBtn" type="submit" class="px-4 py-2 rounded-md glow-btn" disabled>Execute</button>
         </div>
       </form>
     </div>
@@ -307,6 +353,7 @@
    * - trade simulation (buy/sell)
    * - mini sparklines for holdings
    * - marquee only when name overflows
+   * - first-time guided selection + required placeholders
    ***************************************/
 
   // --- Utilities ---
@@ -345,7 +392,6 @@
     RELIANCE: { name: 'Reliance', base: 2500 },
     ICICI: { name: 'ICICI Bank', base: 1000 },
 
-    // Additional assets added per request:
     SBI: { name: 'State Bank of India', base: 640 },
     AXISBANK: { name: 'Axis Bank', base: 850 },
     KOTAKBANK: { name: 'Kotak Mahindra Bank', base: 1900 },
@@ -357,6 +403,7 @@
 
   // Load or initialize portfolio state from localStorage
   const STORAGE_KEY = 'paisa_portfolio_v1';
+  const FIRST_TRADE_KEY = 'paisa_first_trade_seen';
   let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
 
   if (!state) {
@@ -377,7 +424,6 @@
     };
     // reduce initial cash to reflect demo buy totals
     state.cash = 50000 - (32000 + 7500 + 12800); // Simulate initial deposit and buys
-    // ensure non-negative
     if(state.cash < 0) state.cash = 10000;
     saveState();
   }
@@ -388,7 +434,7 @@
 
   // generate (or fetch) series for each asset and for "PORTFOLIO" aggregate
   function getSeriesFor(asset, days=120) {
-    // fallback if asset isn't in ASSETS_INFO (shouldn't happen)
+    // fallback if asset isn't in ASSETS_INFO
     if (!ASSETS_INFO[asset]) {
       ASSETS_INFO[asset] = { name: asset, base: 100 };
     }
@@ -636,9 +682,20 @@
   const tradePrice = document.getElementById('tradePrice');
   const tradeTotal = document.getElementById('tradeTotal');
   const tradeCancel = document.getElementById('tradeCancel');
+  const executeBtn = document.getElementById('executeBtn');
+  const selectorBlock = document.getElementById('selectorBlock');
+  const firstTimeGuide = document.getElementById('firstTimeGuide');
+  const guideGotIt = document.getElementById('guideGotIt');
 
   function populateTradeAssets() {
     tradeAsset.innerHTML = '';
+    // placeholder
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.innerText = 'Select asset...';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    tradeAsset.appendChild(placeholder);
     for (const k of Object.keys(ASSETS_INFO)) {
       const opt = document.createElement('option');
       opt.value = k;
@@ -646,17 +703,59 @@
       tradeAsset.appendChild(opt);
     }
   }
+
+  // initial populate (keeps things in sync)
   populateTradeAssets();
 
+  function showFirstTimeGuideIfNeeded() {
+    const seen = localStorage.getItem(FIRST_TRADE_KEY);
+    if (!seen) {
+      firstTimeGuide.style.display = 'block';
+      selectorBlock.classList.add('first-time-highlight');
+    } else {
+      firstTimeGuide.style.display = 'none';
+      selectorBlock.classList.remove('first-time-highlight');
+    }
+  }
+
+  guideGotIt.addEventListener('click', () => {
+    localStorage.setItem(FIRST_TRADE_KEY, '1');
+    firstTimeGuide.style.display = 'none';
+    selectorBlock.classList.remove('first-time-highlight');
+  });
+
   function openTradeModal(asset = null, type = 'buy') {
+    // refresh assets & reset placeholders each open
+    populateTradeAssets();
+
     tradeModal.classList.remove('hidden');
     tradeModal.classList.add('flex');
-    tradeType.value = type;
-    if (asset) tradeAsset.value = asset;
+    tradeForm.reset(); // reset quantity/price inputs to default form values (will also clear selects)
+    // re-add placeholder selection for tradeType if needed
+    tradeType.value = ''; // keep placeholder selected
+    // show guide on first open
+    showFirstTimeGuideIfNeeded();
+
+    // preselect asset if provided (inline trade)
+    if (asset) {
+      tradeAsset.value = asset;
+    } else {
+      // keep placeholder selected
+      tradeAsset.value = '';
+    }
+
+    // if user preselected asset, populate price
     updateTradePrice();
-    // tiny UX: focus qty
-    setTimeout(()=>{ tradeQty.focus(); tradeQty.select(); }, 150);
+
+    // small UX: focus first controls
+    setTimeout(()=>{ 
+      if (!tradeAsset.value) tradeAsset.focus();
+      else tradeQty.focus();
+      // ensure execute state updated
+      updateExecuteState();
+    }, 150);
   }
+
   function closeTradeModal() {
     tradeModal.classList.add('hidden');
     tradeModal.classList.remove('flex');
@@ -669,20 +768,47 @@
   // compute trade price/total live (clean deterministic logic)
   function updateTradePrice() {
     const asset = tradeAsset.value;
+    if (!asset) {
+      // reset price/total until user selects something
+      tradePrice.value = '';
+      tradeTotal.value = '';
+      updateExecuteState();
+      return;
+    }
     const series = getSeriesFor(asset, 30);
     const price = series[series.length - 1].value || 0;
     tradePrice.value = price.toFixed(2);
     const qty = Number(tradeQty.value) || 0;
     const total = qty * price;
     tradeTotal.value = fmt(total);
+    updateExecuteState();
   }
-  tradeAsset.addEventListener('change', updateTradePrice);
-  tradeQty.addEventListener('input', updateTradePrice);
+
+  function updateExecuteState() {
+    const assetVal = tradeAsset.value;
+    const typeVal = tradeType.value;
+    const qty = Math.max(0, Math.floor(Number(tradeQty.value) || 0));
+    const price = Number(tradePrice.value || 0);
+    const ok = assetVal && typeVal && qty >= 1 && price > 0;
+    executeBtn.disabled = !ok;
+  }
+
+  tradeAsset.addEventListener('change', () => { updateTradePrice(); updateExecuteState(); });
+  tradeType.addEventListener('change', updateExecuteState);
+  tradeQty.addEventListener('input', () => { 
+    const asset = tradeAsset.value;
+    if (asset) {
+      const price = Number(tradePrice.value || 0);
+      const qty = Math.max(0, Math.floor(Number(tradeQty.value) || 0));
+      tradeTotal.value = price > 0 ? fmt(qty * price) : '';
+    }
+    updateExecuteState();
+  });
   tradePrice.addEventListener('input', () => {
-    const qty = Number(tradeQty.value) || 0;
-    const price = Number(tradePrice.value) || 0;
-    const total = qty * price;
-    tradeTotal.value = fmt(total);
+    const qty = Math.max(0, Math.floor(Number(tradeQty.value) || 0));
+    const price = Number(tradePrice.value || 0);
+    tradeTotal.value = price > 0 ? fmt(qty * price) : '';
+    updateExecuteState();
   });
 
   // trade submit
@@ -692,7 +818,7 @@
     const type = tradeType.value;
     const qty = Math.max(1, Math.floor(Number(tradeQty.value)));
     const price = Number(tradePrice.value);
-    if (!asset || !qty || !price) { alert('Enter valid values'); return; }
+    if (!asset || !type || !qty || !price) { alert('Please select asset & type, and enter valid quantity / price'); return; }
 
     const total = Number((qty * price).toFixed(2));
     if (type === 'buy') {
@@ -729,6 +855,9 @@
     }
 
     saveState();
+    // mark that user has completed a trade so guide won't show anymore
+    localStorage.setItem(FIRST_TRADE_KEY, '1');
+
     closeTradeModal();
     refreshMain();
     renderHoldings();
@@ -788,6 +917,7 @@
     if (e.shiftKey && e.key.toLowerCase() === 'c') {
       if (confirm('Reset portfolio demo state?')) {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(FIRST_TRADE_KEY);
         location.reload();
       }
     }
