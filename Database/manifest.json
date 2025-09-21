@@ -1,0 +1,9 @@
+{
+  "name": "Paisabuddy",
+  "short_name": "Paisabuddy",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Learn finance with audio explainers & offline lessons",
+  "icons": []
+}
